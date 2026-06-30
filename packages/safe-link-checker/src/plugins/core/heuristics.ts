@@ -24,7 +24,7 @@ export class PunycodePlugin implements VerificationPlugin {
   weight = 1.0;
 
   async execute(ctx: PluginContext): Promise<CheckResult | null> {
-    const urlToTest = ctx.state.get('finalUrl') || ctx.normalizedUrl;
+    const urlToTest = (ctx.state.get('finalUrl') as string) || ctx.normalizedUrl;
     const res = validatePunycode(urlToTest);
     return { ...res, confidence: 100 };
   }
@@ -37,7 +37,7 @@ export class HeuristicsPlugin implements VerificationPlugin {
   weight = 1.5; // Slightly higher weight
 
   async execute(ctx: PluginContext): Promise<CheckResult | null> {
-    const urlToTest = ctx.state.get('finalUrl') || ctx.normalizedUrl;
+    const urlToTest = (ctx.state.get('finalUrl') as string) || ctx.normalizedUrl;
     const res = validateHeuristics(urlToTest);
     return { ...res, confidence: 85 };
   }

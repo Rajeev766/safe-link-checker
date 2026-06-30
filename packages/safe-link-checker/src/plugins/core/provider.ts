@@ -13,7 +13,7 @@ export class ProviderPluginAdapter implements VerificationPlugin {
   }
 
   async execute(ctx: PluginContext): Promise<CheckResult | null> {
-    const urlToTest = ctx.state.get('finalUrl') || ctx.normalizedUrl;
+    const urlToTest = (ctx.state.get('finalUrl') as string) || ctx.normalizedUrl;
     const res = await this.provider.check(urlToTest, ctx.options);
     if (!res) return null;
     
