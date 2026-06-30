@@ -1,0 +1,26 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model VerificationLog {
+  id            String   @id @default(uuid())
+  url           String
+  normalizedUrl String
+  safe          Boolean
+  score         Int
+  riskLevel     String
+  timestamp     DateTime @default(now())
+}
+
+model DomainReputation {
+  domain        String   @id
+  score         Int
+  safe          Boolean
+  lastChecked   DateTime @default(now())
+  threatIntel   Boolean  @default(false)
+}

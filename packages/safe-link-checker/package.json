@@ -1,0 +1,65 @@
+{
+  "name": "safe-link-checker",
+  "version": "1.0.0",
+  "description": "A production-ready safety checker for links and URLs",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "bin": {
+    "safe-link-checker": "./dist/cli.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "dev": "tsup src/index.ts src/cli.ts --watch",
+    "build": "tsup src/index.ts src/cli.ts --format cjs,esm --dts",
+    "test": "NODE_OPTIONS=--experimental-vm-modules npx jest",
+    "lint": "eslint \"src/**/*.ts\" \"tests/**/*.ts\"",
+    "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\"",
+    "prepare": "npm run build"
+  },
+  "keywords": [
+    "security",
+    "link",
+    "url",
+    "safety",
+    "validator"
+  ],
+  "author": "",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "axios": "^1.18.1",
+    "cheerio": "^1.2.0",
+    "ipaddr.js": "^2.4.0",
+    "normalize-url": "^9.0.1",
+    "punycode": "^2.3.1",
+    "tldts": "^7.4.5",
+    "validator": "^13.15.35"
+  },
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "@types/node": "^26.0.1",
+    "@types/punycode": "^2.1.4",
+    "@types/validator": "^13.11.8",
+    "@typescript-eslint/eslint-plugin": "^8.62.1",
+    "@typescript-eslint/parser": "^8.62.1",
+    "eslint": "^10.6.0",
+    "jest": "^30.4.2",
+    "prettier": "^3.9.3",
+    "ts-jest": "^29.4.11",
+    "tsup": "^8.5.1",
+    "typescript": "^6.0.3"
+  }
+}
