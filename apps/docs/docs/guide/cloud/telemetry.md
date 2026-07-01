@@ -1,0 +1,3 @@
+# Telemetry
+
+Batched analytics reporting.

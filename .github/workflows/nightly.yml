@@ -1,0 +1,31 @@
+name: Nightly Build
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # Every day at midnight UTC
+  workflow_dispatch:
+
+jobs:
+  nightly:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          
+      - run: npm ci
+      
+      - name: Build
+        run: npm run build
+        
+      - name: Run Benchmark Suite
+        run: npm run benchmark --if-present
+        
+      - name: Upload Benchmark Results
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results
+          path: benchmark/

@@ -1,0 +1,38 @@
+name: Security
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    - cron: '30 4 * * 1' # Every Monday at 4:30 AM UTC
+
+jobs:
+  codeql:
+    name: CodeQL Analysis
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript, typescript
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        
+  osv-scanner:
+    name: OSV Scanner
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run OSV-Scanner
+        uses: google/osv-scanner-action/osv-scanner-action@v1.9.0
+        with:
+          scan-args: |-
+            -r
+            .

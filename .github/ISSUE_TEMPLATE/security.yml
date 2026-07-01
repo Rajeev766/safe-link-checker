@@ -1,0 +1,9 @@
+name: Security Vulnerability
+description: Report a security vulnerability
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **DO NOT USE THIS FORM FOR SECURITY VULNERABILITIES.**
+        
+        Please read our [Security Policy](../SECURITY.md) and email security@example.com directly.

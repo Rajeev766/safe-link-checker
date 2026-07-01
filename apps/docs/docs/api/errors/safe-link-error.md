@@ -1,0 +1,3 @@
+# SafeLinkError
+
+Base error class.

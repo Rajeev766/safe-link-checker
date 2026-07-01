@@ -1,0 +1,21 @@
+{
+  "name": "safe-link-checker-api",
+  "version": "1.0.1",
+  "type": "module",
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "start": "node dist/server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "safe-link-checker": "*"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^26.0.1",
+    "tsup": "^8.5.1",
+    "typescript": "^5.5.4"
+  },
+  "sideEffects": false
+}

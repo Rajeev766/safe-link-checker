@@ -1,0 +1,9 @@
+{
+  "name": "fastify-example",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "safe-link-checker": "*",
+    "fastify": "^4.0.0"
+  }
+}

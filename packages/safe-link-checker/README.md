@@ -2,83 +2,101 @@
 
 [![npm version](https://img.shields.io/npm/v/safe-link-checker.svg)](https://npmjs.org/package/safe-link-checker)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![Build Status](https://github.com/Rajeev766/safe-link-checker/actions/workflows/ci.yml/badge.svg)](https://github.com/Rajeev766/safe-link-checker/actions)
-[![Security Rating](https://img.shields.io/badge/Security-A%2B-success.svg)](#)
 
-An enterprise-grade, lightning-fast Node.js library for validating URLs against phishing, malware, SSRF bypasses, DNS rebinding, and Zip bombs. `SafeLinkChecker` uses consensus-based verification across multiple threat intelligence feeds (URLHaus, OpenPhish) alongside deep heuristics and custom DNS hooks to ensure absolute safety before you fetch or process user-provided URLs.
+An enterprise-grade, lightning-fast **Universal URL Intelligence SDK**. `SafeLinkChecker` protects against phishing, malware, SSRF bypasses, DNS rebinding, and malicious payloads. It works seamlessly across Node.js, React Native, Browser, Next.js, Electron, Bun, and Deno with a unified API.
 
 ## Features ✨
-- **Zero-Trust Network Operations**: Mitigates Server-Side Request Forgery (SSRF) and DNS Rebinding via native `dns.lookup` hooks.
-- **Micro-Optimized Performance**: Capable of processing over 68,000 URLs per second using non-blocking worker pools and LRU caches.
-- **Deep Heuristics**: Detects IDN Homograph attacks, mixed scripts, Punycode abuse, protocol downgrades, and redirect loops.
-- **Bomb Protection**: Protects against Slowloris attacks, Zip bombs, and compression bombs at the TCP socket level.
-- **Dual Build**: Fully tree-shakable ESM and CJS exports.
+- **Write Once, Run Anywhere**: Automatically detects the runtime environment to serve the best implementation.
+- **Frontend Verification**: React Native, Expo, and Web Apps execute fast local checks (URL extraction, punycode, homographs, regex rules) in <10ms.
+- **Backend Verification**: Node.js/Bun servers enrich analysis with deep network checks (DNS rebinding, HTTPS certificates, redirect tracing) and Threat Intelligence Providers (URLHaus, OpenPhish).
+- **Consensus & Policy Engine**: Configurable policies calculate trust scores and decide actions (`allow`, `warn`, `block`).
 
 ## Installation 📦
 
 ```bash
 npm install safe-link-checker
-# or
-yarn add safe-link-checker
-# or
-pnpm add safe-link-checker
 ```
+> **One package.** Installs the correct bundle for your platform automatically.
 
-> **Requirements**: Node.js 18.0.0 or later.
+## Compatibility Matrix 📊
+
+| Feature \ Platform | Node.js / Bun | React Native / Expo | Browser / Web |
+|:---|:---:|:---:|:---:|
+| URL Normalization | ✅ | ✅ | ✅ |
+| URL Extraction | ✅ | ✅ | ✅ |
+| Regex / Heuristics | ✅ | ✅ | ✅ |
+| Homograph / Punycode| ✅ | ✅ | ✅ |
+| Private IP / SSRF | ✅ | ✅ | ✅ |
+| Explainable Scoring | ✅ | ✅ | ✅ |
+| Cache Engine | ✅ | ✅ | ✅ |
+| DNS Lookup | ✅ | ❌ | ❌ |
+| HTTPS Certificate | ✅ | ❌ | ❌ |
+| Redirect Tracing | ✅ | ❌ | ❌ |
+| Threat Providers | ✅ | ❌ | ❌ |
 
 ## Quick Start 🚀
 
-```typescript
-import { SafeLinkChecker } from 'safe-link-checker';
+### In Node.js / Backend
 
+```typescript
+import { SafeLinkChecker, verifyLink } from 'safe-link-checker';
+
+// Uses Node.js networking, DNS, and Threat Intelligence automatically
 const checker = new SafeLinkChecker({
   providers: ['urlhaus', 'openphish'],
   cache: true,
-  maxRedirects: 5
+  checkHttps: true,
 });
 
-async function run() {
-  const result = await checker.verify('https://example.com');
-  
-  console.log(`Is Safe? ${result.safe}`);
-  console.log(`Threat Score: ${result.score}/100`);
-  
-  if (!result.safe) {
-    console.log(`Reasons: ${result.reasons.join(', ')}`);
-  }
-}
-
-run();
+const result = await checker.verify('https://example.com');
+console.log(result.runtime); // 'node'
+console.log(result.decision); // 'allow'
+console.log(result.capabilities.performed); // ['UrlValidation', 'HttpsValidation', ...]
 ```
 
-## Batch Processing (68k+ URLs/sec) ⚡️
-
-You can verify massive lists of URLs concurrently. The engine automatically handles concurrency limits and caches results.
+### In React Native / Browser (e.g. Chat Composer)
 
 ```typescript
-const urls = [
-  'https://google.com',
-  'http://malicious-phishing.com',
-  'http://localhost/admin' // Caught by SSRF protection
-];
+import { SafeLinkChecker, extractUrls } from 'safe-link-checker';
 
-const results = await checker.verifyLinks(urls, { timeout: 3000 }, 10); // Concurrency of 10
-results.forEach(res => console.log(`${res.url} -> Safe: ${res.safe}`));
+// Fast local execution - blocks obvious threats before they are sent
+const checker = new SafeLinkChecker();
+
+const text = "Check this out: http://google.com and http://evil.com/exe";
+const urls = extractUrls(text);
+
+const results = await checker.verifyLinks(urls);
+const blockedUrls = results.filter(r => r.decision === 'block');
+
+if (blockedUrls.length > 0) {
+    alert('Malicious link detected! Please remove before sending.');
+}
 ```
 
-## Architecture 🏗️
+## Result Model
 
-`SafeLinkChecker` operates on a **Consensus Engine** and **Plugin Factory** model:
-- `Plugins` (e.g., `UrlValidation`, `IpValidation`, `PunycodePlugin`) independently analyze a URL and emit a `CheckResult` with a `scoreImpact`.
-- The `ConsensusEngine` aggregates these scores. A score >= 50 triggers a fatal abort.
-- `Providers` (e.g., URLHaus, OpenPhish) hit cloud intelligence feeds.
+Both runtimes return the exact same structured result format:
+
+```typescript
+{
+    url: 'https://evil.com',
+    safe: false,
+    decision: 'block',
+    score: 100,
+    confidence: 90,
+    riskLevel: 'DANGEROUS',
+    summary: 'Detected suspicious patterns.',
+    action: 'block',
+    runtime: 'react-native',
+    capabilities: {
+      performed: ['UrlValidation', 'Punycode', 'Heuristics'],
+      skipped: ['dns', 'certificate', 'redirect_trace']
+    }
+}
+```
 
 ## Security 🔒
-Please review our [Security Policy](SECURITY.md) for reporting vulnerabilities. We take SSRF and DNS rebinding protections extremely seriously.
-
-## Contributing 🤝
-Contributions, issues, and feature requests are welcome!
-See the [Contributing Guidelines](CONTRIBUTING.md) to get started.
+Please review our [Security Policy](SECURITY.md) for reporting vulnerabilities.
 
 ## License 📄
 [MIT](LICENSE) © 2026 Rajeev Choudhary

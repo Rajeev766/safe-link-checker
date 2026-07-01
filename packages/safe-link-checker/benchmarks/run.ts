@@ -1,4 +1,4 @@
-import { SafeLinkChecker } from '../src/checker.js';
+import { SafeLinkChecker } from '../src/node/index.js';
 import { performance } from 'perf_hooks';
 import fs from 'fs';
 import path from 'path';

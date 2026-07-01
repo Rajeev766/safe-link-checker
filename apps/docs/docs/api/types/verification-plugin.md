@@ -1,0 +1,3 @@
+# VerificationPlugin
+
+Plugin interface.

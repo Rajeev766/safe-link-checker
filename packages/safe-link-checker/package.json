@@ -6,75 +6,63 @@
   "engines": {
     "node": ">=18"
   },
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "main": "./dist/node/index.cjs",
+  "module": "./dist/node/index.js",
+  "types": "./dist/node/index.d.ts",
   "exports": {
+    "./package.json": "./package.json",
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "workerd": {
+        "types": "./dist/edge/index.d.ts",
+        "import": "./dist/edge/index.js",
+        "require": "./dist/edge/index.cjs"
+      },
+      "react-native": {
+        "types": "./dist/browser/index.d.ts",
+        "import": "./dist/browser/index.js",
+        "require": "./dist/browser/index.cjs"
+      },
+      "browser": {
+        "types": "./dist/browser/index.d.ts",
+        "import": "./dist/browser/index.js",
+        "require": "./dist/browser/index.cjs"
+      },
+      "node": {
+        "types": "./dist/node/index.d.ts",
+        "import": "./dist/node/index.js",
+        "require": "./dist/node/index.cjs"
+      },
+      "default": {
+        "types": "./dist/node/index.d.ts",
+        "import": "./dist/node/index.js",
+        "require": "./dist/node/index.cjs"
+      }
     }
   },
-  "bin": {
-    "safe-link-checker": "dist/cli.js"
-  },
-  "files": [
-    "dist",
-    "README.md",
-    "LICENSE",
-    "CHANGELOG.md",
-    "SECURITY.md",
-    "CONTRIBUTING.md"
-  ],
   "scripts": {
-    "dev": "tsup --watch",
     "build": "tsup",
     "typecheck": "tsc --noEmit",
-    "test": "NODE_OPTIONS=--experimental-vm-modules npx jest",
-    "lint": "eslint \"src/**/*.ts\" \"tests/**/*.ts\"",
-    "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\"",
-    "prepare": "npm run build"
-  },
-  "keywords": [
-    "security",
-    "url",
-    "phishing",
-    "safe-browsing",
-    "url-security"
-  ],
-  "author": "Rajeev Choudhary",
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Rajeev766/safe-link-checker.git"
-  },
-  "homepage": "https://github.com/Rajeev766/safe-link-checker",
-  "bugs": {
-    "url": "https://github.com/Rajeev766/safe-link-checker/issues"
-  },
-  "publishConfig": {
-    "access": "public"
+    "test": "node --experimental-vm-modules ../../node_modules/jest/bin/jest.js"
   },
   "dependencies": {
-    "ipaddr.js": "^2.4.0",
-    "normalize-url": "^9.0.1",
-    "punycode": "^2.3.1",
-    "tldts": "^7.4.5",
-    "validator": "^13.15.35"
+    "@safe-link-checker/browser-runtime": "*",
+    "@safe-link-checker/cache": "*",
+    "@safe-link-checker/core": "*",
+    "@safe-link-checker/edge-runtime": "*",
+    "@safe-link-checker/node-runtime": "*",
+    "@safe-link-checker/plugins": "*",
+    "@safe-link-checker/providers": "*",
+    "@safe-link-checker/shared": "*",
+    "@safe-link-checker/types": "*"
   },
   "devDependencies": {
+    "@jest/globals": "^30.4.1",
     "@types/jest": "^30.0.0",
     "@types/node": "^26.0.1",
-    "@types/punycode": "^2.1.4",
-    "@types/validator": "^13.11.8",
-    "@typescript-eslint/eslint-plugin": "^8.62.1",
-    "@typescript-eslint/parser": "^8.62.1",
-    "eslint": "^10.6.0",
     "jest": "^30.4.2",
-    "prettier": "^3.9.3",
     "ts-jest": "^29.4.11",
     "tsup": "^8.5.1",
-    "typescript": "^6.0.3"
-  }
+    "typescript": "^5.5.4"
+  },
+  "sideEffects": false
 }

@@ -8,10 +8,13 @@ on:
 
 jobs:
   build-and-test:
-    runs-on: ubuntu-latest
+    name: Build & Test on ${{ matrix.os }} (Node ${{ matrix.node-version }})
+    runs-on: ${{ matrix.os }}
     
     strategy:
+      fail-fast: false
       matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
         node-version: [18.x, 20.x, 22.x]
 
     steps:
@@ -27,10 +30,91 @@ jobs:
       run: npm ci
       
     - name: Lint
+      if: matrix.os == 'ubuntu-latest' && matrix.node-version == '20.x'
       run: npm run lint
+      
+    - name: Typecheck
+      if: matrix.os == 'ubuntu-latest' && matrix.node-version == '20.x'
+      run: npm run typecheck
+      
+    - name: Unit Tests
+      run: npm test -- --coverage
       
     - name: Build
       run: npm run build
       
-    - name: Test
-      run: npm test
+    - name: Bundle Size Check
+      if: matrix.os == 'ubuntu-latest' && matrix.node-version == '20.x'
+      run: npx size-limit
+
+    - name: Benchmark Smoke Test
+      if: matrix.os == 'ubuntu-latest' && matrix.node-version == '20.x'
+      run: npm run benchmark
+      
+    - name: Upload Coverage
+      if: matrix.os == 'ubuntu-latest' && matrix.node-version == '20.x'
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage-report
+        path: coverage/
+
+  # Specialized Runtime Tests
+  runtime-bun:
+    name: Test in Bun
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+      - run: npm install
+      - run: npm run build
+      - name: Run Tests in Bun
+        run: bun test
+
+  runtime-deno:
+    name: Test in Deno
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v1
+        with:
+          deno-version: v1.x
+      - run: npm install
+      - run: npm run build
+      - name: Run Tests in Deno
+        run: deno test --allow-all
+
+  docs-preview:
+    needs: build-and-test
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run docs:build --workspace=docs
+      # In a real setup, we would upload to Netlify/Vercel for PR previews
+      # For now, just ensure it builds successfully.
+
+  docs-deploy:
+    needs: build-and-test
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run docs:build --workspace=docs
+      
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./apps/docs/docs/.vitepress/dist

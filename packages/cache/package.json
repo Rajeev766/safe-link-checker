@@ -1,0 +1,23 @@
+{
+  "name": "@safe-link-checker/cache",
+  "version": "1.0.0",
+  "private": true,
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "dependencies": {
+    "@safe-link-checker/types": "*"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.4"
+  },
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./memory": "./src/memory.ts",
+    "./memory.js": "./src/memory.ts",
+    "./lru": "./src/lru.ts",
+    "./lru.js": "./src/lru.ts",
+    "./*": "./src/*"
+  },
+  "sideEffects": false
+}

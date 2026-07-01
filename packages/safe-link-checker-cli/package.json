@@ -1,0 +1,21 @@
+{
+  "name": "safe-link-checker-cli",
+  "version": "1.0.1",
+  "type": "module",
+  "bin": {
+    "safe-link-checker": "dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "safe-link-checker": "*"
+  },
+  "devDependencies": {
+    "@types/node": "^26.0.1",
+    "tsup": "^8.5.1",
+    "typescript": "^5.5.4"
+  },
+  "sideEffects": false
+}

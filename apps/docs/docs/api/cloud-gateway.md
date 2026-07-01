@@ -1,0 +1,3 @@
+# CloudGateway
+
+Manages cloud communication.

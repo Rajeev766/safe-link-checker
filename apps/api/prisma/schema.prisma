@@ -7,20 +7,154 @@ datasource db {
   url      = "file:./dev.db"
 }
 
-model VerificationLog {
-  id            String   @id @default(uuid())
-  url           String
-  normalizedUrl String
-  safe          Boolean
-  score         Int
-  riskLevel     String
-  timestamp     DateTime @default(now())
+model Organization {
+  id        String    @id @default(uuid())
+  name      String
+  projects  Project[]
+  users     User[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 }
 
-model DomainReputation {
-  domain        String   @id
-  score         Int
-  safe          Boolean
-  lastChecked   DateTime @default(now())
-  threatIntel   Boolean  @default(false)
+model User {
+  id             String       @id @default(uuid())
+  email          String       @unique
+  name           String?
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  role           String       @default("member") // owner, admin, member
+  createdAt      DateTime     @default(now())
+}
+
+model Project {
+  id             String       @id @default(uuid())
+  name           String
+  environment    String       @default("production") // staging, development
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  apiKeys        ApiKey[]
+  rules          Rule[]
+  webhooks       Webhook[]
+  logs           VerificationEvent[]
+  createdAt      DateTime     @default(now())
+}
+
+model ApiKey {
+  id        String   @id @default(uuid())
+  keyHash   String   @unique
+  name      String
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id])
+  type      String   @default("public") // public, secret, read-only
+  scopes    String   // comma separated scopes e.g. "verify,analytics:read"
+  expiresAt DateTime?
+  lastUsed  DateTime?
+  createdAt DateTime @default(now())
+}
+
+model Rule {
+  id        String   @id @default(uuid())
+  name      String
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id])
+  condition String   // JSON stringified condition
+  action    String   // BLOCK, ALLOW, WARN, ESCALATE
+  message   String?
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Webhook {
+  id        String   @id @default(uuid())
+  name      String
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id])
+  url       String
+  events    String   // comma separated: "threat.detected, link.blocked"
+  secret    String
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
+model VerificationEvent {
+  id             String   @id @default(uuid())
+  projectId      String
+  project        Project  @relation(fields: [projectId], references: [id])
+  url            String
+  trustScore     Int
+  riskScore      Int
+  threatLevel    String
+  decision       String
+  cacheHit       Boolean
+  durationMs     Int
+  providersUsed  String
+  rulesTriggered String
+  timestamp      DateTime @default(now())
+}
+
+model GlobalReputation {
+  id            String   @id @default(uuid())
+  entityType    String   // url, domain, ip, asn, hash
+  entityValue   String   @unique
+  trustScore    Int
+  riskScore     Int
+  classification String
+  threatLevel   String
+  firstSeen     DateTime @default(now())
+  lastSeen      DateTime @default(now())
+  providerMatches String // JSON string
+}
+
+model CommunityReport {
+  id          String   @id @default(uuid())
+  url         String
+  reportType  String   // false_positive, false_negative, phishing
+  description String?
+  status      String   @default("pending") // pending, verified, rejected
+  createdAt   DateTime @default(now())
+}
+
+model ThreatNode {
+  id          String   @id @default(uuid())
+  type        String   // domain, ip, certificate, campaign, redirect, organization, registrar, malware_family
+  value       String   @unique
+  trustScore  Int      @default(50)
+  riskScore   Int      @default(50)
+  attributes  String   // JSON containing ASN, geolocation, heuristics
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  edgesFrom   ThreatEdge[] @relation("sourceEdges")
+  edgesTo     ThreatEdge[] @relation("targetEdges")
+}
+
+model ThreatEdge {
+  id          String     @id @default(uuid())
+  sourceId    String
+  source      ThreatNode @relation("sourceEdges", fields: [sourceId], references: [id])
+  targetId    String
+  target      ThreatNode @relation("targetEdges", fields: [targetId], references: [id])
+  type        String     // HOSTED_ON, REDIRECTS_TO, SHARES_CERT, SHARES_IP, CONNECTED_CAMPAIGN, VISUALLY_SIMILAR
+  confidence  Int        @default(100) // 0-100 AI correlation confidence
+  createdAt   DateTime   @default(now())
+
+  @@unique([sourceId, targetId, type])
+}
+
+model CommunityContributor {
+  id          String   @id @default(uuid())
+  email       String   @unique
+  alias       String   @unique
+  trustScore  Int      @default(50)
+  level       Int      @default(1)
+  createdAt   DateTime @default(now())
+}
+
+model BrandRegistration {
+  id          String   @id @default(uuid())
+  brandName   String   @unique
+  domains     String   // JSON array of legitimate domains
+  keywords    String   // JSON array of protected keywords
+  logoHash    String?
+  createdAt   DateTime @default(now())
 }

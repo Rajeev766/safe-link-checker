@@ -1,0 +1,7 @@
+{
+  "name": "worker-example",
+  "private": true,
+  "dependencies": {
+    "safe-link-checker": "*"
+  }
+}

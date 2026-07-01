@@ -1,40 +1,44 @@
 # Contributing to safe-link-checker
 
-First off, thank you for considering contributing to `safe-link-checker`!
+First off, thank you for considering contributing to `safe-link-checker`! It's people like you that make it such a great tool.
 
-## Getting Started
+## Development Setup
 
-1. Fork the repository.
-2. Clone your fork locally.
-3. Install dependencies: `npm install`
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/Rajeev766/safe-link-checker.git
+   cd safe-link-checker
+   ```
 
-## Development Workflow
+2. **Install dependencies**
+   This project uses `npm` workspaces.
+   ```bash
+   npm install
+   ```
 
-1. Create a branch for your feature or bug fix: `git checkout -b my-new-feature`
-2. Make your changes in the `src/` directory.
-3. If you are adding a new validator or provider, please include corresponding tests in the `tests/` directory.
+3. **Build the packages**
+   ```bash
+   npm run build
+   ```
 
-## Testing
+4. **Run tests**
+   ```bash
+   npm test
+   ```
 
-Run the test suite using:
+## Architecture
 
-```bash
-npm test
-```
+The project is structured as a monorepo:
+- `packages/core`: The core engine, types, and base plugins.
+- `packages/node-runtime`: Node.js specific implementations (DNS, full TLS).
+- `packages/browser-runtime`: Lightweight fetch-based implementation.
+- `packages/safe-link-checker`: The universal entry point that routes to the correct runtime.
 
-Please ensure that all tests pass before submitting a Pull Request.
+## Submitting a Pull Request
 
-## Linting and Formatting
+1. Create a new branch: `git checkout -b my-feature-branch`
+2. Make your changes and commit them following the [Conventional Commits](https://www.conventionalcommits.org/) specification.
+3. Push to your fork and submit a pull request.
+4. Ensure all CI checks pass (lint, test, build).
 
-Run the linter and formatter:
-
-```bash
-npm run lint
-npm run format
-```
-
-## Pull Request Process
-
-1. Ensure your code conforms to the existing style.
-2. Update the `README.md` with details of changes to the interface, this includes new environment variables, exposed ports, useful file locations, and container parameters.
-3. Submit a pull request to the `main` branch.
+Thank you for contributing!

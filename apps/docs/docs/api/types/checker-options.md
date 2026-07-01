@@ -1,0 +1,3 @@
+# CheckerOptions
+
+Configuration for SafeLinkChecker.

@@ -1,0 +1,47 @@
+name: Bug Report
+description: File a bug report for safe-link-checker
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug! Please ensure you've checked the [Troubleshooting Guide](https://github.com/Rajeev766/safe-link-checker/blob/main/apps/docs/docs/guide/troubleshooting.md) first.
+        
+        **SECURITY ISSUES**: Please report security vulnerabilities to security@example.com instead of using this form.
+  - type: input
+    id: version
+    attributes:
+      label: safe-link-checker Version
+      description: What version of the package are you using?
+    validations:
+      required: true
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Runtime Environment
+      description: Where is the bug occurring?
+      options:
+        - Node.js
+        - Browser
+        - React Native
+        - Expo
+        - Next.js Edge/Server
+        - Cloudflare Workers
+        - Bun
+        - Deno
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Describe the bug clearly.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction Steps
+      description: How can we reproduce this? A minimal CodeSandbox or GitHub repo is highly appreciated.
+    validations:
+      required: true
