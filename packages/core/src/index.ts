@@ -19,3 +19,9 @@ export { RealtimeSubscriptionEngine } from './realtime/subscription.js';
 export { ReputationEngine } from './engine/reputation.js';
 export type { ReputationResult } from './engine/reputation.js';
 export { CloudGateway } from './cloud/gateway.js';
+export { formatResult } from './utils/formatter.js';
+export {
+  createSecurityReport,
+  injectReportHelpers,
+} from './utils/report.js';
+export type { ReportData } from './utils/report.js';

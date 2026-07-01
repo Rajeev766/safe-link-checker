@@ -34,13 +34,13 @@ describe('Penetration & Offensive Testing', () => {
     const payload = 'https://www.payp\u0430l.com'; // Cyrillic 'a'
     const result = await checker.verify(payload);
     expect(result.safe).toBe(false);
-    expect(result.evidence.some((e: any) => e.name === 'Punycode Validator')).toBe(true);
+    expect(result.evidence.some((e: any) => e.id === 'punycode-validator')).toBe(true);
   });
 
   test('SSRF Bypass Attempt (IPv4-Mapped IPv6 Address)', async () => {
     const payload = 'http://[0:0:0:0:0:ffff:127.0.0.1]/';
     const result = await checker.verify(payload);
     expect(result.safe).toBe(false);
-    expect(result.evidence.some((e: any) => e.name === 'IP Validator')).toBe(true);
+    expect(result.evidence.some((e: any) => e.id === 'ip-validator')).toBe(true);
   });
 });

@@ -16,9 +16,9 @@ describe('Batch Verification', () => {
     const results = await checker.verifyLinks(urls, { checkHttps: false });
     
     expect(results.length).toBe(4);
-    expect(results[0]!.normalizedUrl).toBe('https://example.com');
-    expect(results[1]!.normalizedUrl).toBe('https://google.com');
-    expect(results[2]!.normalizedUrl).toBe('https://bad.com');
-    expect(results[3]!.normalizedUrl).toBe('http://test.tk');
+    expect(results[0]?.url.normalized).toBe('https://example.com');
+    expect(results[1]?.url.normalized).toBe('https://google.com');
+    expect(results[2]?.url.normalized).toBe('https://bad.com');
+    expect(results[3]?.url.normalized).toBe('http://test.tk');
   });
 });

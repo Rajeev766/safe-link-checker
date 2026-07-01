@@ -76,10 +76,10 @@ app.post('/v1/verify', async (request: FastifyRequest, reply: FastifyReply) => {
         riskScore: (result as any).riskScore ?? 50,
         threatLevel: (result as any).threatLevel ?? 'UNKNOWN',
         decision: result.decision ?? 'ALLOW',
-        cacheHit: result.fromCache,
+        cacheHit: result.fromCache ?? false,
         durationMs: 0,
-        providersUsed: result.providerResults ? result.providerResults.map(p => p.name).join(',') : '',
-        rulesTriggered: result.evidence ? result.evidence.filter(e => e.detector === 'rule-engine').map(e => e.name).join(',') : ''
+        providersUsed: (result as any).providerResults ? (result as any).providerResults.map((p: any) => p.name).join(',') : '',
+        rulesTriggered: (result as any).checks ? (result as any).checks.filter((e: any) => e.detector === 'rule-engine').map((e: any) => e.name).join(',') : ''
       }
     });
 

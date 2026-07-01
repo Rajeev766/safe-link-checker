@@ -17,8 +17,11 @@ import type {
   VerifyOptions,
   VerificationResult,
   CheckResult,
-  PickledResult
+  PickledResult,
+  Classification
 } from '@safe-link-checker/core';
+import { createSecurityReport, injectReportHelpers } from '@safe-link-checker/core';
+import type { ReportData } from '@safe-link-checker/core';
 
 export interface CheckerOptions extends VerifyOptions {
   mode?: 'local' | 'cloud';
@@ -99,7 +102,7 @@ export class SafeLinkChecker extends EventEmitter {
       if (!mergedOptions.bypassCache && this.cache) {
         const cached = this.cache.get(url);
         if (cached) {
-          const res = { ...cached, fromCache: true };
+          const res = injectReportHelpers({ ...cached, fromCache: true });
           if (this.options.onComplete) this.options.onComplete(res);
           return res;
         }
@@ -126,7 +129,7 @@ export class SafeLinkChecker extends EventEmitter {
       }
 
       if (!mergedOptions.bypassCache && this.cache) {
-        this.cache.set(url, { ...baseResult, fromCache: false });
+        this.cache.set(url, injectReportHelpers({ ...baseResult, fromCache: false }));
       }
       this.emit('onComplete', baseResult);
       if (this.options.onComplete) this.options.onComplete(baseResult);
@@ -163,6 +166,7 @@ export class SafeLinkChecker extends EventEmitter {
   }
 
   private async verifyLocal(url: string, mergedOptions: VerifyOptions & CheckerOptions): Promise<VerificationResult> {
+    const startTime = Date.now();
     await this.pluginManager.initializeAll();
 
     this.emit('onStart', url);
@@ -219,50 +223,52 @@ export class SafeLinkChecker extends EventEmitter {
     };
     const policyResult = this.policyEngine.evaluate(mergedOptions.policy, policyCtx);
 
-    const finalResult: VerificationResult = {
-      url,
-      normalizedUrl,
-      safe: engineResult.safe,
-      trustScore: engineResult.trustScore,
-      riskScore: engineResult.riskScore,
-      confidence: engineResult.confidence,
-      classification: engineResult.classification,
-      threatLevel: engineResult.threatLevel,
-      riskLevel: engineResult.riskLevel,
-      decision: policyResult.decision,
-      summary: engineResult.summary,
-      recommendation: engineResult.recommendation,
-      reasons: checks.map(c => c.message || c.description || c.name),
-      recommendations: [],
-      evidence: engineResult.evidence,
-      checks,
-      providerResults: checks.filter(c => c.category === 'provider'),
-      categories: engineResult.categories,
-      redirectChain: ctx.state.redirectTrace?.chain || [],
-      redirectTrace: ctx.state.redirectTrace || { chain: [], finalUrl: normalizedUrl, redirectCount: 0, anomalies: [] },
-      fromCache: false,
-      action: policyResult.action,
-      policy: mergedOptions.policy || 'balanced',
-      runtime: isDeno ? 'deno' :
+    const runtime = isDeno ? 'deno' :
                isBun ? 'bun' :
                typeof process !== 'undefined' && !!process.versions?.electron ? 'electron' :
                typeof navigator !== 'undefined' && navigator.product === 'ReactNative' ? 'react-native' :
-               isNode ? 'node' : 'browser',
-      capabilities: {
-        performed: plugins.filter(p => p.runtime !== 'node' || isNodeLike).map(p => p.name),
-        skipped: plugins.filter(p => p.runtime === 'node' && !isNodeLike).map(p => p.name)
-      }
+               isNode ? 'node' : 'browser';
+
+    const endTime = Date.now();
+
+    const reportData: ReportData = {
+      url,
+      normalizedUrl,
+      safe: engineResult.safe,
+      decision: policyResult.decision,
+      classification: engineResult.classification,
+      trustScore: engineResult.trustScore,
+      riskScore: engineResult.riskScore,
+      confidence: engineResult.confidence,
+      threatLevel: engineResult.threatLevel,
+      summary: engineResult.summary,
+      recommendation: engineResult.recommendation,
+      runtime,
+      checks,
+      fromCache: false,
+      policy: mergedOptions.policy || 'balanced',
+      startTime,
+      endTime,
+      pluginsExecuted: checks.length,
+      pluginsSkipped: plugins.filter(p => p.runtime === 'node' && !isNodeLike).length,
+      performedCapabilities: plugins.filter(p => p.runtime !== 'node' || isNodeLike).map(p => p.name),
+      skippedCapabilities: plugins.filter(p => p.runtime === 'node' && !isNodeLike).map(p => p.name)
     };
+    if (ctx.state.redirectTrace) reportData.redirectTrace = ctx.state.redirectTrace;
+    if (mergedOptions.debug) reportData.debug = mergedOptions.debug;
+
+
+    const finalResult = createSecurityReport(reportData);
 
     if (!mergedOptions.realtime) {
       this.analytics.track({
         url,
         durationMs: 0,
         cacheHit: false,
-        providersUsed: finalResult.providerResults.map(p => p.name),
+        providersUsed: finalResult.evidence.filter(c => c.category === 'provider').map(p => p.title),
         rulesTriggered: checks.filter(c => c.detector === 'rule-engine').map(c => c.name),
-        threatLevel: finalResult.threatLevel,
-        blocked: finalResult.decision === 'BLOCK'
+        threatLevel: engineResult.threatLevel,
+        blocked: finalResult.decision.toLowerCase() === 'block'
       });
     }
 
@@ -276,15 +282,15 @@ export class SafeLinkChecker extends EventEmitter {
   async verifyPickled(url: string, runtimeOptions: VerifyOptions = {}): Promise<PickledResult> {
     const res = await this.verify(url, runtimeOptions);
     return {
-      url: res.url,
+      url: res.url.original,
       safe: res.safe,
       decision: res.decision,
       trustScore: res.trustScore,
       riskScore: res.riskScore,
-      classification: res.classification,
-      threatLevel: res.threatLevel,
-      securityBadge: res.trustScore > 80 ? '🟢 SAFE' : res.trustScore > 50 ? '🟡 SUSPICIOUS' : '🔴 DANGEROUS',
-      riskColor: res.trustScore > 80 ? 'green' : res.trustScore > 50 ? 'yellow' : 'red',
+      classification: res.classification as Classification,
+      threatLevel: res.threat.level as any,
+      securityBadge: res.badge.label,
+      riskColor: res.badge.color,
       summary: res.summary,
       recommendation: res.recommendation
     };
@@ -334,33 +340,33 @@ export class SafeLinkChecker extends EventEmitter {
           // In bulk processing, individual failures should not crash the batch unless aborted
           if (e.name === 'SafeLinkError' && e.message === 'Bulk verification aborted') throw e;
           
-          results[currentIndex] = {
+          const fallbackData: ReportData = {
             url,
             normalizedUrl: url,
             safe: false,
+            decision: 'block',
+            classification: 'unknown',
             trustScore: 0,
             riskScore: 100,
             confidence: 0,
-            classification: 'Unsafe' as const,
-            threatLevel: 'UNKNOWN' as const,
-            riskLevel: 'DANGEROUS' as const,
-            decision: 'BLOCK' as const,
+            threatLevel: 'UNKNOWN',
             summary: `Verification failed: ${e.message}`,
             recommendation: 'Retry verification',
-            reasons: [e.message],
-            recommendations: [],
-            evidence: [],
+            runtime: 'unknown',
             checks: [],
-            providerResults: [],
-            categories: {} as Record<string, number>,
-            redirectChain: [],
             redirectTrace: { chain: [], finalUrl: url, redirectCount: 0, anomalies: [] },
             fromCache: false,
-            action: 'block',
             policy: mergedOptions.policy || 'balanced',
-            runtime: 'unknown',
-            capabilities: { performed: [], skipped: [] }
+            startTime: Date.now(),
+            endTime: Date.now(),
+            pluginsExecuted: 0,
+            pluginsSkipped: 0,
+            performedCapabilities: [],
+            skippedCapabilities: []
           };
+          if (mergedOptions.debug) fallbackData.debug = mergedOptions.debug;
+          results[currentIndex] = createSecurityReport(fallbackData);
+
         }
       }
     };
@@ -376,15 +382,15 @@ export class SafeLinkChecker extends EventEmitter {
   async verifyLinksPickled(urls: string[], runtimeOptions: VerifyOptions = {}, concurrency = 5): Promise<PickledResult[]> {
     const results = await this.verifyLinks(urls, runtimeOptions, concurrency);
     return results.map(res => ({
-      url: res.url,
+      url: res.url.original,
       safe: res.safe,
       decision: res.decision,
       trustScore: res.trustScore,
       riskScore: res.riskScore,
-      classification: res.classification,
-      threatLevel: res.threatLevel,
-      securityBadge: res.trustScore > 80 ? '🟢 SAFE' : res.trustScore > 50 ? '🟡 SUSPICIOUS' : '🔴 DANGEROUS',
-      riskColor: res.trustScore > 80 ? 'green' : res.trustScore > 50 ? 'yellow' : 'red',
+      classification: res.classification as Classification,
+      threatLevel: res.threat.level as any,
+      securityBadge: res.badge.label,
+      riskColor: res.badge.color,
       summary: res.summary,
       recommendation: res.recommendation
     }));

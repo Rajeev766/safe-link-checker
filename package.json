@@ -7,7 +7,7 @@
   ],
   "scripts": {
     "test": "npm run test --workspaces --if-present",
-    "build": "npm run build --workspaces --if-present",
+    "build": "npm run build -w safe-link-checker && npm run build -w safe-link-checker-cli -w safe-link-checker-api -w @safe-link-checker/api -w playground --if-present",
     "lint": "npm run lint --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "prepare": "husky"
@@ -36,5 +36,6 @@
       "limit": "100 kB",
       "name": "safe-link-checker (Browser)"
     }
-  ]
+  ],
+  "version": "0.0.0"
 }

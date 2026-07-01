@@ -1,16 +1,19 @@
 {
   "name": "safe-link-checker",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "Enterprise-grade URL Intelligence Engine",
   "type": "module",
+  "files": [
+    "dist"
+  ],
   "engines": {
     "node": ">=18"
   },
   "main": "./dist/node/index.cjs",
   "module": "./dist/node/index.js",
+  "browser": "./dist/browser/index.js",
   "types": "./dist/node/index.d.ts",
   "exports": {
-    "./package.json": "./package.json",
     ".": {
       "workerd": {
         "types": "./dist/edge/index.d.ts",
@@ -37,14 +40,54 @@
         "import": "./dist/node/index.js",
         "require": "./dist/node/index.cjs"
       }
-    }
+    },
+    "./browser": {
+      "types": "./dist/browser/index.d.ts",
+      "import": "./dist/browser/index.js",
+      "require": "./dist/browser/index.cjs"
+    },
+    "./node": {
+      "types": "./dist/node/index.d.ts",
+      "import": "./dist/node/index.js",
+      "require": "./dist/node/index.cjs"
+    },
+    "./edge": {
+      "types": "./dist/edge/index.d.ts",
+      "import": "./dist/edge/index.js",
+      "require": "./dist/edge/index.cjs"
+    },
+    "./react-native": {
+      "types": "./dist/browser/index.d.ts",
+      "import": "./dist/browser/index.js",
+      "require": "./dist/browser/index.cjs"
+    },
+    "./types": {
+      "types": "./dist/node/index.d.ts"
+    },
+    "./package.json": "./package.json"
   },
   "scripts": {
-    "build": "tsup",
+    "build": "node build.js",
+    "dev": "node build.js",
     "typecheck": "tsc --noEmit",
-    "test": "node --experimental-vm-modules ../../node_modules/jest/bin/jest.js"
+    "test": "node --experimental-vm-modules ../../node_modules/jest/bin/jest.js",
+    "size": "size-limit"
   },
-  "dependencies": {
+  "size-limit": [
+    {
+      "path": "dist/browser/index.js",
+      "limit": "400 KB"
+    }
+  ],
+  "dependencies": {},
+  "devDependencies": {
+    "@jest/globals": "^30.4.1",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^26.0.1",
+    "jest": "^30.4.2",
+    "ts-jest": "^29.4.11",
+    "tsup": "^8.5.1",
+    "typescript": "^5.5.4",
     "@safe-link-checker/browser-runtime": "*",
     "@safe-link-checker/cache": "*",
     "@safe-link-checker/core": "*",
@@ -55,14 +98,26 @@
     "@safe-link-checker/shared": "*",
     "@safe-link-checker/types": "*"
   },
-  "devDependencies": {
-    "@jest/globals": "^30.4.1",
-    "@types/jest": "^30.0.0",
-    "@types/node": "^26.0.1",
-    "jest": "^30.4.2",
-    "ts-jest": "^29.4.11",
-    "tsup": "^8.5.1",
-    "typescript": "^5.5.4"
+  "sideEffects": false,
+  "author": "SafeLink Team",
+  "license": "MIT",
+  "keywords": [
+    "security",
+    "url",
+    "phishing",
+    "malware",
+    "ssrf",
+    "validation"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/safe-link/safe-link-checker.git"
   },
-  "sideEffects": false
+  "bugs": {
+    "url": "https://github.com/safe-link/safe-link-checker/issues"
+  },
+  "homepage": "https://github.com/safe-link/safe-link-checker#readme",
+  "publishConfig": {
+    "access": "public"
+  }
 }

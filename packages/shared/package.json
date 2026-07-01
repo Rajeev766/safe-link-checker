@@ -12,5 +12,8 @@
     ".": "./src/index.ts",
     "./*": "./src/*"
   },
-  "sideEffects": false
+  "sideEffects": false,
+  "scripts": {
+    "build": "echo 'No build required'"
+  }
 }

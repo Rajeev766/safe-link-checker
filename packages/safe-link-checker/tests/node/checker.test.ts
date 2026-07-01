@@ -36,13 +36,13 @@ describe('SafeLinkChecker', () => {
     // Good URL
     const goodResult = await checker.verify('https://example.com', { checkHttps: false });
     expect(goodResult.safe).toBe(true);
-    expect(goodResult.checks.some(c => c.name === 'MockProvider')).toBe(true);
+    expect(goodResult.checks?.some(c => c.name === 'MockProvider')).toBe(true);
     
     // Bad URL
     const badResult = await checker.verify('https://bad.com', { checkHttps: false });
     expect(badResult.safe).toBe(false);
     expect(badResult.trustScore).toBe(50); // Since MockProvider deducts 50
-    expect(badResult.reasons).toContain('Bad stuff found');
+    expect(badResult.reasons || []).toContain('Bad stuff found');
   });
 
   it('should support caching', async () => {

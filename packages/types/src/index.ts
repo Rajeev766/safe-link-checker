@@ -12,9 +12,22 @@ export type RedirectAnomalyKind = 'LOOP' | 'PROTOCOL_DOWNGRADE' | 'MAX_REDIRECTS
 
 export type RiskCategory = 'domain' | 'certificate' | 'redirect' | 'content' | 'network' | 'provider' | 'browser' | 'email' | 'qr' | 'download' | 'behavior' | 'ai' | 'other';
 export type RiskSeverity = 'critical' | 'high' | 'medium' | 'low' | 'info';
-export type DecisionAction = 'ALLOW' | 'WARN' | 'REVIEW' | 'BLOCK' | 'ESCALATE';
+
+export type DecisionAction = 'allow' | 'warn' | 'block' | 'unknown' | 'ALLOW' | 'WARN' | 'REVIEW' | 'BLOCK' | 'ESCALATE';
 
 export type Classification = 
+  | 'trusted'
+  | 'safe'
+  | 'suspicious'
+  | 'unknown'
+  | 'tracking'
+  | 'spam'
+  | 'phishing'
+  | 'malware'
+  | 'credential_theft'
+  | 'scam'
+  | 'brand_impersonation'
+  | 'typosquatting'
   | 'Safe'
   | 'Suspicious'
   | 'Phishing'
@@ -58,6 +71,7 @@ export interface VerifyOptions {
     enabled: boolean;
     level?: 'anonymous' | 'full';
   };
+  debug?: boolean;
 }
 
 export interface CheckResult {
@@ -130,51 +144,138 @@ export interface ExecutionStats {
   endTime: number;
 }
 
+// -----------------------------------------------------------------------------
+// NEW SECURITY REPORT TYPES
+// -----------------------------------------------------------------------------
+
+export interface VerificationMeta {
+  mode: 'offline' | 'online' | 'hybrid';
+  engine: 'heuristics' | 'network' | 'cloud' | 'combined';
+  version: string;
+  duration: number;
+  cached: boolean;
+  cacheSource: 'memory' | 'redis' | 'filesystem' | 'cloud' | 'none';
+  timestamp: string;
+}
+
+export interface Evidence {
+  id: string;
+  title: string;
+  category: string;
+  status: 'passed' | 'failed' | 'skipped' | 'unknown';
+  weight: number;
+  message: string;
+  recommendation?: string;
+  documentationUrl?: string;
+}
+
+export interface Capabilities {
+  runtime: string;
+  performed: string[];
+  skipped: string[];
+}
+
+export interface SecurityBadge {
+  label: string;
+  variant: 'success' | 'warn' | 'block' | 'unknown' | 'allow';
+  icon: string;
+  color: string;
+}
+
+export interface VisualScore {
+  value: number;
+  max: number;
+  grade: 'A+' | 'A' | 'B' | 'C' | 'D' | 'F';
+  label: string;
+}
+
+export interface ThreatDetails {
+  level: string; // 'low', 'medium', 'high', 'critical'
+  category: string; // e.g. 'trusted', 'malware', etc.
+  family: string | null;
+  techniques: string[];
+}
+
+export interface UrlDetails {
+  original: string;
+  normalized: string;
+  hostname: string;
+  domain: string;
+  subdomain: string;
+  tld: string;
+  protocol: string;
+  port: string;
+  path: string;
+  query: string;
+  hash: string;
+}
+
+export interface PerformanceMetrics {
+  duration: number;
+  cacheHit: boolean;
+  cacheKey?: string;
+  pluginsExecuted: number;
+  pluginsSkipped: number;
+}
+
+export interface PluginExecutionDetails {
+  plugin: string;
+  status: 'passed' | 'failed' | 'skipped';
+  duration: number;
+  scoreContribution: number;
+}
+
 export interface VerificationResult {
-  // Core Identifiers
-  url: string;
-  normalizedUrl: string;
-  safe: boolean; // Legacy
-  
-  // Reputation Engine Scores
-  trustScore: number; // 0-100
-  riskScore: number; // 0-100
-  confidence: number; // 0-100
-  
-  // Classifications
-  classification: Classification;
-  threatLevel: ThreatLevel;
-  riskLevel: RiskLevel; // Legacy
+  // Top Level
+  safe: boolean;
   decision: DecisionAction;
-  
-  // Explanations
+  classification: Classification;
+  trustScore: number;
+  riskScore: number;
+  confidence: number;
+  severity: RiskSeverity | string;
   summary: string;
   recommendation: string;
-  reasons: string[]; // Legacy
-  recommendations: string[]; // Legacy
+  runtime: string;
   
-  // Evidence
-  evidence: CheckResult[];
-  checks: CheckResult[]; // Legacy
-  providerResults: CheckResult[];
-  categories: Record<string, number>;
+  // Structured Details
+  verification: VerificationMeta;
+  evidence: Evidence[];
+  capabilities: Capabilities;
+  badge: SecurityBadge;
+  score: VisualScore;
+  threat: ThreatDetails;
+  url: UrlDetails;
+  performance: PerformanceMetrics;
   
-  // Trace Data
-  redirectChain: string[];
-  redirectTrace: RedirectTrace;
-  
-  // Meta
-  fromCache: boolean;
+  // Debug
+  pluginResults?: PluginExecutionDetails[];
+
+  // Legacy / Back-Compat
+  riskLevel?: RiskLevel;
+  reasons?: string[];
+  recommendations?: string[];
+  checks?: CheckResult[];
+  categories?: Record<string, number>;
+  providerResults?: CheckResult[];
+  redirectChain?: string[];
+  redirectTrace?: RedirectTrace;
+  fromCache?: boolean;
   action?: string;
   policy?: string;
   timeline?: ExecutionTimeline[];
   execution?: ExecutionStats;
   metadata?: RichMetadata | Record<string, unknown>;
-  runtime?: string;
-  capabilities?: {
-    performed: string[];
-    skipped: string[];
-  };
+
+  // Helpers (Non-enumerable, but strongly typed)
+  isSafe?: () => boolean;
+  shouldWarn?: () => boolean;
+  shouldBlock?: () => boolean;
+  toJSON?: () => any;
+  toString?: () => string;
+  toMarkdown?: () => string;
+  toHTML?: () => string;
+  export?: (format: 'json' | 'markdown' | 'html') => string;
 }
 
 export interface PickledResult {
@@ -190,4 +291,3 @@ export interface PickledResult {
   summary: string;
   recommendation: string;
 }
-

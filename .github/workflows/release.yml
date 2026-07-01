@@ -5,18 +5,10 @@ on:
     branches:
       - main
 
-concurrency: ${{ github.workflow }}-${{ github.ref }}
-
 jobs:
   release:
     name: Release
     runs-on: ubuntu-latest
-    outputs:
-      published: ${{ steps.changesets.outputs.published }}
-    permissions:
-      contents: write
-      id-token: write # Required for NPM Provenance and SLSA
-      packages: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -32,54 +24,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Generate SBOM
-        run: npx @cyclonedx/cyclonedx-npm --output-format JSON --output-file bom.json
-
-      - name: Upload SBOM
-        uses: actions/upload-artifact@v4
-        with:
-          name: sbom
-          path: bom.json
-
-      - name: Build Packages
+      - name: Build
         run: npm run build
 
-      - name: Create Release Pull Request or Publish to npm
-        id: changesets
-        uses: changesets/action@v1
-        with:
-          commit: 'chore(release): version packages'
-          title: 'chore(release): version packages'
-          publish: npm publish --access public --provenance
+      - name: Semantic Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-  canary:
-    name: Publish Canary
-    needs: release
-    if: needs.release.outputs.published != 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          
-      - name: Install dependencies
-        run: npm ci
-        
-      - name: Build Packages
-        run: npm run build
-        
-      - name: Publish Canary version
-        run: |
-          npx @changesets/cli version --snapshot next
-          npm publish --tag next
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npx semantic-release

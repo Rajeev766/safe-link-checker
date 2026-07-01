@@ -1,6 +1,6 @@
 {
   "name": "safe-link-checker-cli",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "type": "module",
   "bin": {
     "safe-link-checker": "dist/cli.js"

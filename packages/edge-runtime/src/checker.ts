@@ -17,8 +17,11 @@ import type {
   VerifyOptions,
   VerificationResult,
   CheckResult,
-  PickledResult
+  PickledResult,
+  Classification
 } from '@safe-link-checker/core';
+import { createSecurityReport, injectReportHelpers } from '@safe-link-checker/core';
+import type { ReportData } from '@safe-link-checker/core';
 
 export interface CheckerOptions extends VerifyOptions {
   mode?: 'local' | 'cloud';
@@ -98,7 +101,7 @@ export class SafeLinkChecker extends EventEmitter {
       if (!mergedOptions.bypassCache && this.cache) {
         const cached = this.cache.get(url);
         if (cached) {
-          const res = { ...cached, fromCache: true };
+          const res = injectReportHelpers({ ...cached, fromCache: true });
           if (this.options.onComplete) this.options.onComplete(res);
           return res;
         }
@@ -119,7 +122,7 @@ export class SafeLinkChecker extends EventEmitter {
       }
 
       if (!mergedOptions.bypassCache && this.cache) {
-        this.cache.set(url, { ...baseResult, fromCache: false });
+        this.cache.set(url, injectReportHelpers({ ...baseResult, fromCache: false }));
       }
       this.emit('onComplete', baseResult);
       if (this.options.onComplete) this.options.onComplete(baseResult);
@@ -156,6 +159,7 @@ export class SafeLinkChecker extends EventEmitter {
   }
 
   private async verifyLocal(url: string, mergedOptions: VerifyOptions & CheckerOptions): Promise<VerificationResult> {
+    const startTime = Date.now();
     await this.pluginManager.initializeAll();
 
     this.emit('onStart', url);
@@ -211,46 +215,44 @@ export class SafeLinkChecker extends EventEmitter {
     };
     const policyResult = this.policyEngine.evaluate(mergedOptions.policy, policyCtx);
 
-    const finalResult: VerificationResult = {
+    const endTime = Date.now();
+    const reportData: ReportData = {
       url,
       normalizedUrl,
       safe: engineResult.safe,
+      decision: policyResult.decision,
+      classification: engineResult.classification,
       trustScore: engineResult.trustScore,
       riskScore: engineResult.riskScore,
       confidence: engineResult.confidence,
-      classification: engineResult.classification,
       threatLevel: engineResult.threatLevel,
-      riskLevel: engineResult.riskLevel,
-      decision: policyResult.decision,
       summary: engineResult.summary,
       recommendation: engineResult.recommendation,
-      reasons: checks.map(c => c.message || c.description || c.name),
-      recommendations: [],
-      evidence: engineResult.evidence,
-      checks,
-      providerResults: checks.filter(c => c.category === 'provider'),
-      categories: engineResult.categories,
-      redirectChain: ctx.state.redirectTrace?.chain || [],
-      redirectTrace: ctx.state.redirectTrace || { chain: [], finalUrl: normalizedUrl, redirectCount: 0, anomalies: [] },
-      fromCache: false,
-      action: policyResult.action,
-      policy: mergedOptions.policy || 'balanced',
       runtime: 'edge',
-      capabilities: {
-        performed: plugins.map(p => p.name),
-        skipped: []
-      }
+      checks,
+      fromCache: false,
+      policy: mergedOptions.policy || 'balanced',
+      startTime,
+      endTime,
+      pluginsExecuted: checks.length,
+      pluginsSkipped: 0,
+      performedCapabilities: plugins.map(p => p.name),
+      skippedCapabilities: []
     };
+    if (ctx.state.redirectTrace) reportData.redirectTrace = ctx.state.redirectTrace;
+    if (mergedOptions.debug) reportData.debug = mergedOptions.debug;
+
+    const finalResult = createSecurityReport(reportData);
 
     if (!mergedOptions.realtime) {
       this.analytics.track({
         url,
         durationMs: 0,
         cacheHit: false,
-        providersUsed: finalResult.providerResults.map(p => p.name),
+        providersUsed: finalResult.evidence.filter(c => c.category === 'provider').map(p => p.title),
         rulesTriggered: checks.filter(c => c.detector === 'rule-engine').map(c => c.name),
-        threatLevel: finalResult.threatLevel,
-        blocked: finalResult.decision === 'BLOCK'
+        threatLevel: engineResult.threatLevel,
+        blocked: finalResult.decision.toLowerCase() === 'block'
       });
     }
 
@@ -307,15 +309,15 @@ export class SafeLinkChecker extends EventEmitter {
   async verifyLinksPickled(urls: string[], runtimeOptions: VerifyOptions = {}, concurrency = 5): Promise<PickledResult[]> {
     const results = await this.verifyLinks(urls, runtimeOptions, concurrency);
     return results.map(res => ({
-      url: res.url,
+      url: res.url.original,
       safe: res.safe,
       decision: res.decision,
       trustScore: res.trustScore,
       riskScore: res.riskScore,
-      classification: res.classification,
-      threatLevel: res.threatLevel,
-      securityBadge: res.trustScore > 80 ? '🟢 SAFE' : res.trustScore > 50 ? '🟡 SUSPICIOUS' : '🔴 DANGEROUS',
-      riskColor: res.trustScore > 80 ? 'green' : res.trustScore > 50 ? 'yellow' : 'red',
+      classification: res.classification as Classification,
+      threatLevel: res.threat.level as any,
+      securityBadge: res.badge.label,
+      riskColor: res.badge.color,
       summary: res.summary,
       recommendation: res.recommendation
     }));

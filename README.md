@@ -10,6 +10,9 @@
   <a href="https://bundlephobia.com/package/safe-link-checker"><img src="https://img.shields.io/bundlephobia/minzip/safe-link-checker?style=flat-square&label=gzip%20size&color=orange" alt="bundle size" /></a>
   <a href="https://github.com/Rajeev766/safe-link-checker"><img src="https://img.shields.io/badge/TypeScript-strict-blue?style=flat-square&logo=typescript" alt="typescript" /></a>
   <a href="https://github.com/Rajeev766/safe-link-checker/actions"><img src="https://img.shields.io/github/actions/workflow/status/Rajeev766/safe-link-checker/ci.yml?style=flat-square&label=CI" alt="CI" /></a>
+  <a href="https://codecov.io/gh/Rajeev766/safe-link-checker"><img src="https://img.shields.io/codecov/c/github/Rajeev766/safe-link-checker?style=flat-square&label=coverage" alt="coverage" /></a>
+  <a href="https://securityscorecards.dev/viewer/?uri=github.com/Rajeev766/safe-link-checker"><img src="https://img.shields.io/ossf-scorecard/github.com/Rajeev766/safe-link-checker?label=openssf%20scorecard&style=flat-square" alt="OpenSSF Scorecard" /></a>
+  <a href="https://github.com/Rajeev766/safe-link-checker/security"><img src="https://img.shields.io/badge/security-audited-success?style=flat-square" alt="Security" /></a>
 </p>
 
 <p align="center">

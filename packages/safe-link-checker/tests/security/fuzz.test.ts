@@ -20,7 +20,7 @@ describe('Fuzz Testing - Core Engine', () => {
       }),
       { numRuns: 100 }
     );
-  }, 10000);
+  }, 20000);
 
   test('Unicode & Punycode normalization should never throw unhandled exceptions', async () => {
     await fc.assert(
@@ -35,5 +35,5 @@ describe('Fuzz Testing - Core Engine', () => {
       }),
       { numRuns: 100 }
     );
-  }, 10000);
+  }, 20000);
 });

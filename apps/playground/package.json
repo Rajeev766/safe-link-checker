@@ -8,10 +8,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "safe-link-checker": "*"
+    "safe-link-checker": "workspace:*"
   },
   "devDependencies": {
-    "typescript": "^5.5.4",
     "vite": "^5.0.0"
   }
 }
