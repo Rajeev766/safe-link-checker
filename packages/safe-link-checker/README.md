@@ -2,7 +2,7 @@
 
 [![npm version](https://img.shields.io/npm/v/safe-link-checker.svg)](https://npmjs.org/package/safe-link-checker)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![Build Status](https://github.com/your-username/safe-link-checker/actions/workflows/ci.yml/badge.svg)](https://github.com/your-username/safe-link-checker/actions)
+[![Build Status](https://github.com/Rajeev766/safe-link-checker/actions/workflows/ci.yml/badge.svg)](https://github.com/Rajeev766/safe-link-checker/actions)
 [![Security Rating](https://img.shields.io/badge/Security-A%2B-success.svg)](#)
 
 An enterprise-grade, lightning-fast Node.js library for validating URLs against phishing, malware, SSRF bypasses, DNS rebinding, and Zip bombs. `SafeLinkChecker` uses consensus-based verification across multiple threat intelligence feeds (URLHaus, OpenPhish) alongside deep heuristics and custom DNS hooks to ensure absolute safety before you fetch or process user-provided URLs.
@@ -81,4 +81,4 @@ Contributions, issues, and feature requests are welcome!
 See the [Contributing Guidelines](CONTRIBUTING.md) to get started.
 
 ## License 📄
-[MIT](LICENSE) © 2026 Your Name / Company
+[MIT](LICENSE) © 2026 Rajeev Choudhary
