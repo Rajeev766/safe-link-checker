@@ -12,7 +12,15 @@ import type { CheckResult } from '../types/index.js';
 export type RuleDefinition = (ctx: PluginContext) => Promise<CheckResult | null> | CheckResult | null;
 
 export class RuleEnginePlugin implements VerificationPlugin {
+  id = 'core:rule-engine';
   name = 'RuleEngine';
+  version = '1.0.0';
+  description = 'Executes custom user-defined and built-in rules';
+  author = 'SafeLink Team';
+  type: 'heuristic' = 'heuristic';
+  capabilities = ['custom-rules', 'policy-enforcement'];
+  priority = 10;
+  weight = 1.0;
   private rules: Map<string, RuleDefinition> = new Map();
 
   constructor() {
@@ -44,7 +52,7 @@ export class RuleEnginePlugin implements VerificationPlugin {
   }
 
   async execute(ctx: PluginContext): Promise<CheckResult | null> {
-    for (const [name, rule] of this.rules) {
+    for (const [, rule] of this.rules) {
       try {
         const res = await rule(ctx);
         if (res) {
@@ -52,7 +60,7 @@ export class RuleEnginePlugin implements VerificationPlugin {
           // For now, return the first rule violation we find, or modify to aggregate later
           return res;
         }
-      } catch (e) {
+      } catch {
         // ignore rule errors
       }
     }

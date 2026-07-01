@@ -7,14 +7,14 @@
  */
 
 import type { CheckResult } from '../types/index.js';
-// @ts-ignore: TS doesn't understand the CJS default export properly here
 import isURL from 'validator/lib/isURL.js';
+import type Validator from 'validator';
 
 export function validateUrl(urlStr: string): CheckResult {
   const trimmed = urlStr.trim();
+  const checkURL = isURL as unknown as typeof Validator.isURL;
 
-  // @ts-ignore: TS doesn't understand the CJS default export properly here
-  if (!(isURL as any)(trimmed, { require_protocol: true })) {
+  if (!checkURL(trimmed, { require_protocol: true })) {
     return {
       name: 'URL Validator',
       detector: 'url-syntax',

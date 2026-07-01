@@ -11,9 +11,14 @@ import { traceRedirects } from '../../validators/redirect.js';
 import type { CheckResult } from '../../types/index.js';
 
 export class RedirectPlugin implements VerificationPlugin {
+  id = 'core:redirect-trace';
   name = 'RedirectTrace';
-  type: PluginType = 'network';
   version = '1.0.0';
+  description = 'Traces URL redirects to final destination';
+  author = 'SafeLink Team';
+  type: PluginType = 'network';
+  capabilities = ['redirect-following', 'chain-analysis'];
+  priority = 95;
   weight = 1.0;
 
   async execute(ctx: PluginContext): Promise<CheckResult | null> {

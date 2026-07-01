@@ -1,4 +1,4 @@
-
+#!/usr/bin/env node
 /**
  * SafeLinkChecker
  * Copyright (c) 2026
@@ -8,6 +8,7 @@
  */
 import { parseArgs } from 'util';
 import { SafeLinkChecker } from './checker.js';
+import type { CheckResult } from './types/index.js';
 import { URLHausProvider } from './providers/urlhaus.js';
 import { OpenPhishProvider } from './providers/openphish.js';
 
@@ -78,7 +79,7 @@ Options:
 
     if (values.verbose) {
       console.log(`\n${bold}Checks Run:${reset}`);
-      result.checks.forEach((c: any) => {
+      result.checks.forEach((c: CheckResult) => {
         const cColor = c.safe ? green : (c.scoreImpact >= 50 ? red : yellow);
         console.log(`  - ${c.name}: ${cColor}${c.safe ? 'PASS' : 'FAIL'}${reset} (Impact: ${c.scoreImpact})`);
       });

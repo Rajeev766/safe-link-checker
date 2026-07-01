@@ -48,9 +48,10 @@ app.post('/v1/verify', async (request, reply) => {
     });
 
     return result;
-  } catch (error: any) {
+  } catch (error: unknown) {
     app.log.error(error);
-    return reply.status(500).send({ error: error.message || 'Internal Server Error' });
+    const msg = error instanceof Error ? error.message : 'Internal Server Error';
+    return reply.status(500).send({ error: msg });
   }
 });
 
@@ -76,9 +77,10 @@ app.post('/v1/verify/batch', async (request, reply) => {
     await prisma.verificationLog.createMany({ data: logData });
 
     return results;
-  } catch (error: any) {
+  } catch (error: unknown) {
     app.log.error(error);
-    return reply.status(500).send({ error: error.message || 'Internal Server Error' });
+    const msg = error instanceof Error ? error.message : 'Internal Server Error';
+    return reply.status(500).send({ error: msg });
   }
 });
 

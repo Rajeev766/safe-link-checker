@@ -16,34 +16,35 @@ import { validateIp } from '../validators/ip.js';
  * This completely prevents DNS Rebinding attacks because the socket will never
  * connect to a private/local IP space even if the DNS record changed.
  */
-export const safeLookup: dns.LookupFunction = (
-  hostname,
-  options,
-  callback
+export const safeLookup = (
+  hostname: string,
+  options: dns.LookupOptions | number | undefined | null,
+  callback: (err: NodeJS.ErrnoException | null, address: string | dns.LookupAddress[], family?: number) => void
 ) => {
-  // We explicitly cast the callback to any here because dns.lookup has complex overloads 
-  // and we just want to passthrough after our security check.
-  dns.lookup(hostname, options, (err, address, family) => {
+  dns.lookup(hostname, options as dns.LookupOptions, (err, address, family) => {
     if (err) {
-      return (callback as any)(err);
+      return callback(err, address as string | dns.LookupAddress[], family);
     }
 
-    // The address might be a string (single result) or an array of objects (if `all: true`)
-    let ipToCheck = typeof address === 'string' ? address : null;
+    let ipToCheck: string | null = null;
     
-    // If all: true was passed, address is an array of { address, family }
-    if (Array.isArray(address) && address.length > 0) {
-      ipToCheck = address[0].address;
+    if (typeof address === 'string') {
+      ipToCheck = address;
+    } else if (Array.isArray(address) && address.length > 0) {
+      const first = address[0];
+      if (first && typeof first === 'object' && 'address' in first) {
+        ipToCheck = (first as dns.LookupAddress).address;
+      }
     }
 
     if (ipToCheck) {
       const urlStr = ipToCheck.includes(':') ? `http://[${ipToCheck}]` : `http://${ipToCheck}`;
       const ipResult = validateIp(urlStr);
       if (!ipResult.safe && process.env.NODE_ENV !== 'test') {
-        return (callback as any)(new Error(`Security Exception: DNS Rebinding Blocked. Hostname resolved to forbidden IP: ${ipToCheck}`));
+        return callback(new Error(`Security Exception: DNS Rebinding Blocked. Hostname resolved to forbidden IP: ${ipToCheck}`), address as string | dns.LookupAddress[], family);
       }
     }
 
-    (callback as any)(null, address, family);
+    callback(null, address as string | dns.LookupAddress[], family);
   });
 };

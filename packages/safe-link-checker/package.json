@@ -17,16 +17,20 @@
     }
   },
   "bin": {
-    "safe-link-checker": "./dist/cli.js"
+    "safe-link-checker": "dist/cli.js"
   },
   "files": [
     "dist",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "CHANGELOG.md",
+    "SECURITY.md",
+    "CONTRIBUTING.md"
   ],
   "scripts": {
     "dev": "tsup --watch",
     "build": "tsup",
+    "typecheck": "tsc --noEmit",
     "test": "NODE_OPTIONS=--experimental-vm-modules npx jest",
     "lint": "eslint \"src/**/*.ts\" \"tests/**/*.ts\"",
     "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\"",
@@ -43,7 +47,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Rajeev766/safe-link-checker.git"
+    "url": "git+https://github.com/Rajeev766/safe-link-checker.git"
   },
   "homepage": "https://github.com/Rajeev766/safe-link-checker",
   "bugs": {

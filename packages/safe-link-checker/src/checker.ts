@@ -181,7 +181,7 @@ export class SafeLinkChecker extends EventEmitter {
 
   private async verifyLocal(url: string, mergedOptions: VerifyOptions & CheckerOptions): Promise<VerificationResult> {
     // Initialize plugins if necessary (idempotent)
-    await this.pluginManager.initAll();
+    await this.pluginManager.initializeAll();
 
     // Emit onStart
     this.emit('onStart', url);

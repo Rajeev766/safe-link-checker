@@ -13,9 +13,14 @@ import { validateHeuristics } from '../../validators/heuristic.js';
 import type { CheckResult } from '../../types/index.js';
 
 export class ShortenerPlugin implements VerificationPlugin {
+  id = 'core:shortener';
   name = 'ShortenerDetection';
-  type: PluginType = 'heuristic';
   version = '1.0.0';
+  description = 'Detects if the URL is a known link shortener';
+  author = 'SafeLink Team';
+  type: PluginType = 'heuristic';
+  capabilities = ['url-expansion', 'shortener-detection'];
+  priority = 85;
   weight = 1.0;
 
   async execute(ctx: PluginContext): Promise<CheckResult | null> {
@@ -26,9 +31,14 @@ export class ShortenerPlugin implements VerificationPlugin {
 }
 
 export class PunycodePlugin implements VerificationPlugin {
+  id = 'core:punycode';
   name = 'PunycodeDetection';
-  type: PluginType = 'heuristic';
   version = '1.0.0';
+  description = 'Detects Punycode and homograph attacks in domains';
+  author = 'SafeLink Team';
+  type: PluginType = 'heuristic';
+  capabilities = ['homograph-detection', 'punycode-analysis'];
+  priority = 75;
   weight = 1.0;
 
   async execute(ctx: PluginContext): Promise<CheckResult | null> {
@@ -39,10 +49,15 @@ export class PunycodePlugin implements VerificationPlugin {
 }
 
 export class HeuristicsPlugin implements VerificationPlugin {
+  id = 'core:heuristics';
   name = 'GeneralHeuristics';
-  type: PluginType = 'heuristic';
   version = '1.0.0';
-  weight = 1.5; // Slightly higher weight
+  description = 'General URL heuristics like length and entropy';
+  author = 'SafeLink Team';
+  type: PluginType = 'heuristic';
+  capabilities = ['entropy-analysis', 'pattern-matching'];
+  priority = 70;
+  weight = 1.5;
 
   async execute(ctx: PluginContext): Promise<CheckResult | null> {
     const urlToTest = ctx.state.finalUrl || ctx.normalizedUrl;

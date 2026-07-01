@@ -12,9 +12,17 @@ import type { CheckResult, Provider } from '../../types/index.js';
 export class ProviderPluginAdapter implements VerificationPlugin {
   type: PluginType = 'provider';
   version = '1.0.0';
+  description = 'External threat intelligence provider adapter';
+  author = 'SafeLink Team';
+  capabilities = ['threat-intelligence'];
+  priority = 50;
   weight = 1.0;
 
   constructor(private provider: Provider) {}
+
+  get id(): string {
+    return `provider:${this.provider.name.toLowerCase()}`;
+  }
 
   get name(): string {
     return this.provider.name;

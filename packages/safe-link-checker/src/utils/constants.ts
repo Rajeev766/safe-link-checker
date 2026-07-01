@@ -14,4 +14,5 @@ export const DEFAULT_OPTIONS: Required<Omit<VerifyOptions, 'customShorteners' | 
   bypassCache: false,
   removeTrackingParams: false,
   checkHttps: true,
+  policy: 'balanced'
 };

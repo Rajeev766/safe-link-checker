@@ -8,12 +8,4 @@ export default defineConfig({
   sourcemap: true,
   treeshake: true,
   target: 'node18',
-  banner: ({ entry }) => {
-    if (entry === 'cli') {
-      return {
-        js: '#!/usr/bin/env node',
-      };
-    }
-    return {};
-  },
 });

@@ -7,6 +7,8 @@
  */
 
 import { jest } from '@jest/globals';
+import type { RequestOptions } from 'https';
+import type { ClientRequest } from 'http';
 
 // ─── Build a reusable fake https.request ─────────────────────────────────────
 
@@ -16,7 +18,7 @@ interface FakeReq {
   _cb?: RequestCallback;
   _errorHandler?: (err: Error) => void;
   _timeoutHandler?: () => void;
-  on: (event: string, handler: (...args: any[]) => void) => FakeReq;
+  on: (event: string, handler: (...args: unknown[]) => void) => FakeReq;
   end: () => void;
   destroy: () => void;
 }
@@ -48,33 +50,33 @@ const { validateHttps } = await import('../src/validators/https.js');
 
 function mockSuccess(mock = mockHttpsRequest) {
   const req = makeFakeRequest();
-  mock.mockImplementationOnce(((_opts: any, cb: RequestCallback) => {
+  mock.mockImplementation(((_opts: RequestOptions | string | URL, cb: RequestCallback) => {
     // Simulate immediate successful response
     setImmediate(() => cb({ statusCode: 200, resume: () => {} }));
-    return req as any;
-  }) as any);
+    return req as unknown as ClientRequest;
+  }) as typeof import('https').request);
   return req;
 }
 
 function mockError(code: string, message = 'Error', mock = mockHttpsRequest) {
   const req = makeFakeRequest();
-  mock.mockImplementationOnce(((_opts: any, _cb: RequestCallback) => {
+  mock.mockImplementationOnce(((_opts: import('https').RequestOptions, _cb: RequestCallback) => {
     setImmediate(() => {
       const err: NodeJS.ErrnoException = new Error(message);
       err.code = code;
       req._errorHandler?.(err);
     });
-    return req as any;
-  }) as any);
+    return req as unknown as import('http').ClientRequest;
+  }) as unknown as typeof import('https').request);
   return req;
 }
 
 function mockTimeout(mock = mockHttpsRequest) {
   const req = makeFakeRequest();
-  mock.mockImplementationOnce(((_opts: any, _cb: RequestCallback) => {
+  mock.mockImplementationOnce(((_opts: import('https').RequestOptions, _cb: RequestCallback) => {
     setImmediate(() => req._timeoutHandler?.());
-    return req as any;
-  }) as any);
+    return req as unknown as import('http').ClientRequest;
+  }) as unknown as typeof import('https').request);
   return req;
 }
 
@@ -99,10 +101,10 @@ describe('validateHttps', () => {
 
     it('should accept any 2xx/4xx/5xx response as valid TLS', async () => {
       const req = makeFakeRequest();
-      mockHttpsRequest.mockImplementationOnce(((_opts: any, cb: RequestCallback) => {
+      mockHttpsRequest.mockImplementationOnce(((_opts: import('https').RequestOptions, cb: RequestCallback) => {
         setImmediate(() => cb({ statusCode: 404, resume: () => {} }));
-        return req as any;
-      }) as any);
+        return req as unknown as ReturnType<typeof import('https').request>;
+      }) as unknown as typeof import('https').request);
       const res = await validateHttps('https://example.com/missing');
       expect(res.safe).toBe(true);
       expect(res.metadata?.httpsStatus).toBe('HTTPS');
@@ -227,7 +229,7 @@ describe('validateHttps', () => {
     it('should forward the timeout to the request options', async () => {
       mockSuccess();
       await validateHttps('https://example.com', 1000);
-      const [opts] = mockHttpsRequest.mock.calls[0] as any[];
+      const [opts] = mockHttpsRequest.mock.calls[0] as unknown as [import('https').RequestOptions, RequestCallback];
       expect(opts.timeout).toBe(1000);
     });
   });

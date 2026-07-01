@@ -6,15 +6,22 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-import type { VerifyOptions, CheckResult } from '../types/index.js';
+import type { VerifyOptions, CheckResult, RedirectAnomalyKind } from '../types/index.js';
 
 export type PluginType = 'network' | 'content' | 'heuristic' | 'provider';
+
+export interface RedirectTrace {
+  finalUrl: string;
+  redirectCount: number;
+  chain: string[];
+  anomalies: RedirectAnomalyKind[];
+}
 
 export interface PluginState {
   finalUrl?: string;
   isShortener?: boolean;
-  redirectTrace?: any;
-  [key: string]: any;
+  redirectTrace?: RedirectTrace;
+  [key: string]: unknown;
 }
 
 export interface PluginContext {
@@ -25,15 +32,20 @@ export interface PluginContext {
 }
 
 export interface VerificationPlugin {
+  id: string;
   name: string;
-  type: PluginType;
   version: string;
+  description: string;
+  author: string;
+  type: PluginType;
+  capabilities: string[];
+  priority: number;
   weight?: number; // Defines how much this plugin impacts the final score
   
   /** 
    * Initialization hook (e.g. connecting to DB, setting up local models) 
    */
-  init?(): Promise<void>;
+  initialize?(): Promise<void>;
 
   /**
    * Main execution hook. 
@@ -44,7 +56,12 @@ export interface VerificationPlugin {
   /**
    * Optional teardown hook
    */
-  destroy?(): Promise<void>;
+  dispose?(): Promise<void>;
+
+  /**
+   * Optional health check hook
+   */
+  health?(): Promise<boolean>;
 }
 
 export class PluginManager {
@@ -57,9 +74,15 @@ export class PluginManager {
     this.plugins.push(plugin);
   }
 
-  async initAll() {
+  async initializeAll() {
     await Promise.all(
-      this.plugins.map(p => p.init ? p.init() : Promise.resolve())
+      this.plugins.map(p => p.initialize ? p.initialize() : Promise.resolve())
+    );
+  }
+
+  async disposeAll() {
+    await Promise.all(
+      this.plugins.map(p => p.dispose ? p.dispose() : Promise.resolve())
     );
   }
 

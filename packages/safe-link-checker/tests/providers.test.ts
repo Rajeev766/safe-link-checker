@@ -3,7 +3,7 @@ import { OpenPhishProvider } from '../src/providers/openphish.js';
 import { jest, describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 
 describe('Providers', () => {
-  let fetchSpy: any;
+  let fetchSpy: ReturnType<typeof jest.spyOn>;
 
   beforeEach(() => {
     fetchSpy = jest.spyOn(global, 'fetch');
@@ -18,7 +18,7 @@ describe('Providers', () => {
       fetchSpy.mockResolvedValueOnce({
         ok: true,
         json: () => Promise.resolve({ query_status: 'ok', threat: 'malware_download' })
-      } as any);
+      } as unknown as Response);
 
       const provider = new URLHausProvider();
       const result = await provider.check('http://bad.com');
@@ -32,7 +32,7 @@ describe('Providers', () => {
       fetchSpy.mockResolvedValueOnce({
         ok: true,
         json: () => Promise.resolve({ query_status: 'no_results' })
-      } as any);
+      } as unknown as Response);
 
       const provider = new URLHausProvider();
       const result = await provider.check('http://good.com');
@@ -55,7 +55,7 @@ describe('Providers', () => {
       fetchSpy.mockResolvedValueOnce({
         ok: true,
         json: () => Promise.resolve({ query_status: 'ok', threat: 'malware' })
-      } as any);
+      } as unknown as Response);
 
       const provider = new URLHausProvider();
       await provider.check('http://bad.com');

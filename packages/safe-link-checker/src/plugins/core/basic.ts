@@ -13,9 +13,14 @@ import { validateHttps } from '../../validators/https.js';
 import type { CheckResult } from '../../types/index.js';
 
 export class UrlValidationPlugin implements VerificationPlugin {
+  id = 'core:url-validation';
   name = 'UrlValidation';
-  type: PluginType = 'network';
   version = '1.0.0';
+  description = 'Validates URL structure and syntax';
+  author = 'SafeLink Team';
+  type: PluginType = 'network';
+  capabilities = ['url-parsing', 'syntax-check'];
+  priority = 100;
   weight = 1.0;
 
   async execute(ctx: PluginContext): Promise<CheckResult | null> {
@@ -26,9 +31,14 @@ export class UrlValidationPlugin implements VerificationPlugin {
 }
 
 export class IpValidationPlugin implements VerificationPlugin {
+  id = 'core:ip-validation';
   name = 'IpValidation';
-  type: PluginType = 'network';
   version = '1.0.0';
+  description = 'Validates IP addresses and checks for loopback/private IPs';
+  author = 'SafeLink Team';
+  type: PluginType = 'network';
+  capabilities = ['ip-check', 'ssrf-prevention'];
+  priority = 90;
   weight = 1.0;
 
   async execute(ctx: PluginContext): Promise<CheckResult | null> {
@@ -38,9 +48,14 @@ export class IpValidationPlugin implements VerificationPlugin {
 }
 
 export class HttpsValidationPlugin implements VerificationPlugin {
+  id = 'core:https-validation';
   name = 'HttpsValidation';
-  type: PluginType = 'network';
   version = '1.0.0';
+  description = 'Validates HTTPS certificate and connection';
+  author = 'SafeLink Team';
+  type: PluginType = 'network';
+  capabilities = ['tls-check', 'certificate-validation'];
+  priority = 80;
   weight = 1.0;
 
   async execute(ctx: PluginContext): Promise<CheckResult | null> {
