@@ -1,0 +1,10 @@
+---
+title: "[Idea] "
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: What is your idea?
+      description: Share your ideas for new features, plugins, or general improvements.
+    validations:
+      required: true

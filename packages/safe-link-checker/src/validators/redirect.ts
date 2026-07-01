@@ -1,7 +1,16 @@
+/**
+ * SafeLinkChecker
+ * Copyright (c) 2026
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
 import type { VerifyOptions, RedirectTrace, RedirectAnomalyKind } from '../types/index.js';
 import http from 'http';
 import https from 'https';
 import type { IncomingMessage } from 'http';
+import { safeLookup } from '../utils/dns.js';
 
 const DEFAULT_MAX_REDIRECTS = 5;
 const DEFAULT_TIMEOUT_MS = 5000;
@@ -114,6 +123,7 @@ function headRequest(urlStr: string, timeoutMs: number, signal?: AbortSignal): P
       method: 'HEAD',
       timeout: timeoutMs,
       signal,
+      lookup: safeLookup, // SSRF & DNS Rebinding Protection
       // Skip cert validation so we can follow chains even with bad certs
       // (the https validator is responsible for cert scoring separately)
       rejectUnauthorized: false,
@@ -129,6 +139,11 @@ function headRequest(urlStr: string, timeoutMs: number, signal?: AbortSignal): P
       });
     });
 
+    req.setTimeout(timeoutMs, () => {
+      req.destroy();
+      settle(null);
+    });
+    
     req.on('timeout', () => { req.destroy(); settle(null); });
     req.on('error', () => settle(null));
     req.end();

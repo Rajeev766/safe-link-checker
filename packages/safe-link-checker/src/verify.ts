@@ -1,3 +1,11 @@
+/**
+ * SafeLinkChecker
+ * Copyright (c) 2026
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
 import type { VerifyOptions, VerificationResult } from './types/index.js';
 import { normalizeLink } from './utils/normalize.js';
 import { calculateScore } from './utils/score.js';

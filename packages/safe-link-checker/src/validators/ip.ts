@@ -1,3 +1,11 @@
+/**
+ * SafeLinkChecker
+ * Copyright (c) 2026
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
 import type { CheckResult } from '../types/index.js';
 import ipaddr from 'ipaddr.js';
 
@@ -42,7 +50,7 @@ export function validateIp(urlStr: string): CheckResult {
     hostname = new URL(urlStr).hostname.toLowerCase();
   } catch {
     // If URL parsing fails here, the URL validator will have already caught it
-    return { name: 'IP Validator', safe: true, scoreImpact: 0, message: 'Could not parse hostname.' };
+    return { name: 'IP Validator', detector: 'ip-parser', category: 'network', severity: 'info', safe: true, scoreImpact: 0, title: 'Unparseable IP', message: 'Could not parse hostname.' };
   }
 
   // Strip IPv6 brackets: [::1] → ::1
@@ -59,25 +67,35 @@ export function validateIp(urlStr: string): CheckResult {
   if (LOCAL_HOSTNAMES.has(rawHost)) {
     return {
       name: 'IP Validator',
+      detector: 'ip-localhost',
+      category: 'network',
+      severity: 'critical',
       safe: false,
       scoreImpact: 100,
+      title: 'Localhost Address Detected',
       message: `High risk: "${rawHost}" resolves to a local/loopback address.`,
+      fatal: true,
     };
   }
 
   if (rawHost.endsWith(LOCAL_HOSTNAME_SUFFIX)) {
     return {
       name: 'IP Validator',
+      detector: 'ip-mdns',
+      category: 'network',
+      severity: 'critical',
       safe: false,
       scoreImpact: 100,
+      title: 'mDNS Address Detected',
       message: `High risk: "${rawHost}" is a link-local mDNS hostname (.local).`,
+      fatal: true,
     };
   }
 
   // --- IP-based checks ---
   if (!ipaddr.isValid(rawHost)) {
     // It's a regular domain name — no IP concerns
-    return { name: 'IP Validator', safe: true, scoreImpact: 0, message: 'Hostname is a domain name, not a raw IP.' };
+    return { name: 'IP Validator', detector: 'ip-domain', category: 'network', severity: 'info', safe: true, scoreImpact: 0, title: 'Standard Domain', message: 'Hostname is a domain name, not a raw IP.' };
   }
 
   const addr = ipaddr.parse(rawHost);
@@ -87,9 +105,14 @@ export function validateIp(urlStr: string): CheckResult {
     if ((BLOCKED_IPV4_RANGES as readonly string[]).includes(range)) {
       return {
         name: 'IP Validator',
+        detector: 'ip-v4-private',
+        category: 'network',
+        severity: 'critical',
         safe: false,
         scoreImpact: 100,
+        title: 'Private IPv4 Address',
         message: `High risk: IP address is a ${describeRange(range)}.`,
+        fatal: true,
       };
     }
   } else {
@@ -101,9 +124,14 @@ export function validateIp(urlStr: string): CheckResult {
     if ((BLOCKED_IPV6_RANGES as readonly string[]).includes(range)) {
       return {
         name: 'IP Validator',
+        detector: 'ip-v6-private',
+        category: 'network',
+        severity: 'critical',
         safe: false,
         scoreImpact: 100,
+        title: 'Private IPv6 Address',
         message: `High risk: IPv6 address is a ${describeRange(range)}.`,
+        fatal: true,
       };
     }
 
@@ -114,9 +142,14 @@ export function validateIp(urlStr: string): CheckResult {
       if ((BLOCKED_IPV4_RANGES as readonly string[]).includes(v4Range)) {
         return {
           name: 'IP Validator',
+          detector: 'ip-v6-mapped-private',
+          category: 'network',
+          severity: 'critical',
           safe: false,
           scoreImpact: 100,
+          title: 'Private IPv4-Mapped IPv6 Address',
           message: `High risk: IPv4-mapped IPv6 address maps to a ${describeRange(v4Range)}.`,
+          fatal: true,
         };
       }
     }
@@ -124,8 +157,12 @@ export function validateIp(urlStr: string): CheckResult {
 
   return {
     name: 'IP Validator',
+    detector: 'ip-public',
+    category: 'network',
+    severity: 'info',
     safe: true,
     scoreImpact: 0,
+    title: 'Public IP',
     message: 'IP address is not in a private or reserved range.',
   };
 }

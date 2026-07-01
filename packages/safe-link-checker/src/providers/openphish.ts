@@ -1,3 +1,11 @@
+/**
+ * SafeLinkChecker
+ * Copyright (c) 2026
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
 
 import type { CheckResult, Provider, VerifyOptions } from '../types/index.js';
 import { LRUCache } from '../cache/lru.js';
@@ -36,15 +44,25 @@ export class OpenPhishProvider implements Provider {
       // Simulated response for demonstration
       return {
         name: this.name,
+        detector: 'openphish-simulated',
+        category: 'provider',
+        severity: 'info',
+        title: 'OpenPhish Not Listed',
         safe: true,
         scoreImpact: 0,
+        confidence: 100,
         message: 'OpenPhish check passed (Simulated).',
       };
     } catch {
       return {
         name: this.name,
+        detector: 'openphish-error',
+        category: 'provider',
+        severity: 'medium',
+        title: 'Provider Check Failed',
         safe: true,
         scoreImpact: 0,
+        confidence: 0,
         message: 'OpenPhish check failed or timed out. Skipping.',
       };
     }

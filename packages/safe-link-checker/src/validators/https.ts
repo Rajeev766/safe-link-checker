@@ -1,3 +1,11 @@
+/**
+ * SafeLinkChecker
+ * Copyright (c) 2026
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
 import type { CheckResult, HttpsStatus } from '../types/index.js';
 import https from 'https';
 import http from 'http';
@@ -26,9 +34,21 @@ function makeResult(
   status: HttpsStatus,
   safe: boolean,
   scoreImpact: number,
+  title: string,
   message: string,
+  severity: import('../types/index.js').RiskSeverity,
 ): CheckResult {
-  return { name: 'HTTPS Validator', safe, scoreImpact, message, metadata: { httpsStatus: status } };
+  return { 
+    name: 'HTTPS Validator', 
+    detector: 'https-probe',
+    category: 'certificate',
+    severity,
+    title,
+    safe, 
+    scoreImpact, 
+    message, 
+    metadata: { httpsStatus: status } 
+  };
 }
 
 /**
@@ -52,7 +72,7 @@ export async function validateHttps(
   try {
     parsed = new URL(urlStr);
   } catch {
-    return makeResult('SKIPPED', true, 0, 'Could not parse URL for HTTPS check.');
+    return makeResult('SKIPPED', true, 0, 'Unparseable URL', 'Could not parse URL for HTTPS check.', 'info');
   }
 
   // Already HTTP — probe whether an HTTPS equivalent exists
@@ -65,7 +85,9 @@ export async function validateHttps(
         'HTTP_ONLY',
         false,
         20,
+        'Unencrypted Connection',
         'URL uses HTTP. An HTTPS version is available but the link uses an unencrypted connection.',
+        'medium'
       );
     }
     if (httpsResult.status === 'CERT_ERROR') {
@@ -73,7 +95,9 @@ export async function validateHttps(
         'CERT_ERROR',
         false,
         40,
+        'Certificate Error',
         `TLS/SSL certificate error on HTTPS probe: ${httpsResult.detail}`,
+        'critical'
       );
     }
     // HTTPS probe timed out or unreachable — can't determine, pass through
@@ -81,7 +105,9 @@ export async function validateHttps(
       'HTTP_ONLY',
       false,
       20,
+      'Unencrypted Connection',
       'URL uses HTTP. Could not confirm whether an HTTPS version is available.',
+      'medium'
     );
   }
 
@@ -90,14 +116,16 @@ export async function validateHttps(
 
   switch (result.status) {
     case 'HTTPS':
-      return makeResult('HTTPS', true, 0, 'HTTPS is enabled and the certificate is valid.');
+      return makeResult('HTTPS', true, 0, 'Secure Connection', 'HTTPS is enabled and the certificate is valid.', 'info');
 
     case 'CERT_ERROR':
       return makeResult(
         'CERT_ERROR',
         false,
         40,
+        'Certificate Error',
         `TLS/SSL certificate error: ${result.detail}`,
+        'critical'
       );
 
     case 'TIMEOUT':
@@ -105,7 +133,9 @@ export async function validateHttps(
         'TIMEOUT',
         true,
         0,
+        'Connection Timeout',
         'HTTPS probe timed out. The server may be slow or rate-limiting. No penalty applied.',
+        'info'
       );
 
     default:
@@ -113,7 +143,9 @@ export async function validateHttps(
         'UNREACHABLE',
         true,
         0,
+        'Host Unreachable',
         `HTTPS probe could not reach the server: ${result.detail}. No penalty applied.`,
+        'info'
       );
   }
 }

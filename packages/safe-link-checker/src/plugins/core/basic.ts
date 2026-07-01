@@ -1,3 +1,11 @@
+/**
+ * SafeLinkChecker
+ * Copyright (c) 2026
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
 import type { VerificationPlugin, PluginContext, PluginType } from '../../core/plugin.js';
 import { validateUrl } from '../../validators/url.js';
 import { validateIp } from '../../validators/ip.js';
@@ -13,7 +21,7 @@ export class UrlValidationPlugin implements VerificationPlugin {
   async execute(ctx: PluginContext): Promise<CheckResult | null> {
     const res = validateUrl(ctx.normalizedUrl);
     // Set confidence high for basic structural checks
-    return { ...res, confidence: 100 };
+    return { ...res, confidence: 100, fatal: !res.safe };
   }
 }
 
@@ -25,7 +33,7 @@ export class IpValidationPlugin implements VerificationPlugin {
 
   async execute(ctx: PluginContext): Promise<CheckResult | null> {
     const res = validateIp(ctx.normalizedUrl);
-    return { ...res, confidence: 100 };
+    return { ...res, confidence: 100, fatal: !res.safe };
   }
 }
 

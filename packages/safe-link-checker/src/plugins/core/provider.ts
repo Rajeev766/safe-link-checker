@@ -1,3 +1,11 @@
+/**
+ * SafeLinkChecker
+ * Copyright (c) 2026
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
 import type { VerificationPlugin, PluginContext, PluginType } from '../../core/plugin.js';
 import type { CheckResult, Provider } from '../../types/index.js';
 
@@ -13,7 +21,7 @@ export class ProviderPluginAdapter implements VerificationPlugin {
   }
 
   async execute(ctx: PluginContext): Promise<CheckResult | null> {
-    const urlToTest = (ctx.state.get('finalUrl') as string) || ctx.normalizedUrl;
+    const urlToTest = ctx.state.finalUrl || ctx.normalizedUrl;
     const res = await this.provider.check(urlToTest, ctx.options);
     if (!res) return null;
     

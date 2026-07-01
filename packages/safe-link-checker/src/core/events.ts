@@ -1,3 +1,11 @@
+/**
+ * SafeLinkChecker
+ * Copyright (c) 2026
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
 export type EventCallback = (...args: unknown[]) => void;
 
 export class EventEmitter {
@@ -17,11 +25,21 @@ export class EventEmitter {
     }
   }
 
-  emit(event: string, ...args: unknown[]) {
+  emit(event: string, arg1?: unknown, arg2?: unknown) {
     const eventListeners = this.listeners.get(event);
     if (eventListeners) {
-      for (const listener of eventListeners) {
-        listener(...args);
+      if (arg2 !== undefined) {
+        for (const listener of eventListeners) {
+          listener(arg1, arg2);
+        }
+      } else if (arg1 !== undefined) {
+        for (const listener of eventListeners) {
+          listener(arg1);
+        }
+      } else {
+        for (const listener of eventListeners) {
+          listener();
+        }
       }
     }
   }

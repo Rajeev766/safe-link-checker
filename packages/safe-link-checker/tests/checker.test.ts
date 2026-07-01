@@ -42,7 +42,7 @@ describe('SafeLinkChecker', () => {
     const badResult = await checker.verify('https://bad.com', { checkHttps: false });
     expect(badResult.safe).toBe(false);
     expect(badResult.score).toBe(50); // Since MockProvider deducts 50
-    expect(badResult.reasons).toContain('MockProvider: Bad stuff found (Penalty: 50.0)');
+    expect(badResult.reasons).toContain('MockProvider: Bad stuff found');
   });
 
   it('should support caching', async () => {

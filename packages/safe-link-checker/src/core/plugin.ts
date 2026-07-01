@@ -1,12 +1,27 @@
+/**
+ * SafeLinkChecker
+ * Copyright (c) 2026
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
 import type { VerifyOptions, CheckResult } from '../types/index.js';
 
 export type PluginType = 'network' | 'content' | 'heuristic' | 'provider';
+
+export interface PluginState {
+  finalUrl?: string;
+  isShortener?: boolean;
+  redirectTrace?: any;
+  [key: string]: any;
+}
 
 export interface PluginContext {
   url: string;
   normalizedUrl: string;
   options: VerifyOptions;
-  state: Map<string, unknown>; // Shared state across plugins during a single verification run
+  state: PluginState; // Shared state across plugins during a single verification run
 }
 
 export interface VerificationPlugin {

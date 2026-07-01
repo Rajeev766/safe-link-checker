@@ -19,8 +19,8 @@ describe('Punycode Validator', () => {
     // 'epic.com' with pure cyrillic 'еріс' -> 'xn--e1awd7f.com'
     const result = validatePunycode('https://xn--e1awd7f.com');
     expect(result.safe).toBe(false);
-    expect(result.scoreImpact).toBe(80);
-    expect(result.message).toContain('Suspicious: Label "еріс" contains confusable Unicode characters.');
+    expect(result.scoreImpact).toBe(100);
+    expect(result.message).toContain('High risk: Label "еріс" contains highly suspicious confusable or invisible Unicode characters.');
   });
 
   it('should detect mixed scripts in a single label', () => {

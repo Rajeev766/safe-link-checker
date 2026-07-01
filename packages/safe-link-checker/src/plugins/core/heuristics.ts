@@ -1,3 +1,11 @@
+/**
+ * SafeLinkChecker
+ * Copyright (c) 2026
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
 import type { VerificationPlugin, PluginContext, PluginType } from '../../core/plugin.js';
 import { validateShortener } from '../../validators/shortener.js';
 import { validatePunycode } from '../../validators/punycode.js';
@@ -12,7 +20,7 @@ export class ShortenerPlugin implements VerificationPlugin {
 
   async execute(ctx: PluginContext): Promise<CheckResult | null> {
     const res = validateShortener(ctx.normalizedUrl, ctx.options.customShorteners);
-    ctx.state.set('isShortener', res.metadata?.isShortener === true);
+    ctx.state.isShortener = res.metadata?.isShortener === true;
     return { ...res, confidence: 95 };
   }
 }
@@ -24,7 +32,7 @@ export class PunycodePlugin implements VerificationPlugin {
   weight = 1.0;
 
   async execute(ctx: PluginContext): Promise<CheckResult | null> {
-    const urlToTest = (ctx.state.get('finalUrl') as string) || ctx.normalizedUrl;
+    const urlToTest = ctx.state.finalUrl || ctx.normalizedUrl;
     const res = validatePunycode(urlToTest);
     return { ...res, confidence: 100 };
   }
@@ -37,7 +45,7 @@ export class HeuristicsPlugin implements VerificationPlugin {
   weight = 1.5; // Slightly higher weight
 
   async execute(ctx: PluginContext): Promise<CheckResult | null> {
-    const urlToTest = (ctx.state.get('finalUrl') as string) || ctx.normalizedUrl;
+    const urlToTest = ctx.state.finalUrl || ctx.normalizedUrl;
     const res = validateHeuristics(urlToTest);
     return { ...res, confidence: 85 };
   }

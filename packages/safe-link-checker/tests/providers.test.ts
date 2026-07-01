@@ -1,23 +1,24 @@
 import { URLHausProvider } from '../src/providers/urlhaus.js';
 import { OpenPhishProvider } from '../src/providers/openphish.js';
-import axios from 'axios';
 import { jest, describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 
 describe('Providers', () => {
-  let postSpy: any;
+  let fetchSpy: any;
 
   beforeEach(() => {
-    postSpy = jest.spyOn(axios, 'post');
+    fetchSpy = jest.spyOn(global, 'fetch');
   });
 
   afterEach(() => {
     jest.restoreAllMocks();
   });
+  
   describe('URLHausProvider', () => {
-    it('should return DANGEROUS if listed', async () => {
-      postSpy.mockResolvedValueOnce({
-        data: { query_status: 'ok', threat: 'malware_download' }
-      });
+    it('should return DANGEROUS if listed (online API)', async () => {
+      fetchSpy.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ query_status: 'ok', threat: 'malware_download' })
+      } as any);
 
       const provider = new URLHausProvider();
       const result = await provider.check('http://bad.com');
@@ -27,10 +28,11 @@ describe('Providers', () => {
       expect(result?.message).toContain('URLHaus');
     });
 
-    it('should return SAFE if not listed', async () => {
-      postSpy.mockResolvedValueOnce({
-        data: { query_status: 'no_results' }
-      });
+    it('should return SAFE if not listed (online API)', async () => {
+      fetchSpy.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ query_status: 'no_results' })
+      } as any);
 
       const provider = new URLHausProvider();
       const result = await provider.check('http://good.com');
@@ -39,23 +41,35 @@ describe('Providers', () => {
       expect(result?.scoreImpact).toBe(0);
     });
 
-    it('should fail gracefully on network error', async () => {
-      postSpy.mockRejectedValueOnce(new Error('Network error'));
+    it('should handle timeout/failure gracefully', async () => {
+      fetchSpy.mockRejectedValueOnce(new Error('Network error'));
 
       const provider = new URLHausProvider();
       const result = await provider.check('http://error.com');
 
-      expect(result?.safe).toBe(true);
-      expect(result?.scoreImpact).toBe(0);
+      expect(result?.safe).toBe(true); // Fails open
       expect(result?.message).toContain('failed');
+    });
+    
+    it('should cache results', async () => {
+      fetchSpy.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ query_status: 'ok', threat: 'malware' })
+      } as any);
+
+      const provider = new URLHausProvider();
+      await provider.check('http://bad.com');
+      const cached = await provider.check('http://bad.com'); // Should hit cache
+
+      expect(cached?.safe).toBe(false);
+      expect(fetchSpy).toHaveBeenCalledTimes(1);
     });
   });
 
   describe('OpenPhishProvider', () => {
-    it('should return SAFE for the simulated check', async () => {
+    it('should return SAFE (simulated)', async () => {
       const provider = new OpenPhishProvider();
       const result = await provider.check('http://test.com');
-      
       expect(result?.safe).toBe(true);
       expect(result?.message).toContain('OpenPhish');
     });

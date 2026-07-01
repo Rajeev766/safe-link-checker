@@ -1,3 +1,11 @@
+/**
+ * SafeLinkChecker
+ * Copyright (c) 2026
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
 import type { CheckResult } from '../types/index.js';
 import { parse } from 'tldts';
 
@@ -36,6 +44,10 @@ function levenshtein(a: string, b: string): number {
 export function validateHeuristics(url: string): CheckResult {
   const result: CheckResult = {
     name: 'Heuristics Validator',
+    detector: 'heuristics-engine',
+    category: 'behavior',
+    severity: 'info',
+    title: 'Heuristics Check Passed',
     safe: true,
     scoreImpact: 0,
     message: '',
@@ -121,7 +133,16 @@ export function validateHeuristics(url: string): CheckResult {
     result.safe = false;
     result.scoreImpact = Math.min(100, penalty);
     result.metadata!.flags = flags;
+    result.title = 'Suspicious Heuristics Detected';
     result.message = `Detected suspicious heuristics: ${flags.join(', ')}`;
+    
+    if (result.scoreImpact >= 50) {
+      result.severity = 'critical';
+    } else if (result.scoreImpact >= 30) {
+      result.severity = 'high';
+    } else {
+      result.severity = 'medium';
+    }
   }
 
   return result;
