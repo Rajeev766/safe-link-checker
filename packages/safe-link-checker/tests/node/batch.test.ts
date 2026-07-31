@@ -1,6 +1,4 @@
-import { SafeLinkChecker } from '@safe-link-checker/node-runtime';
-import { LRUCache } from '@safe-link-checker/node-runtime';
-import type { VerificationResult } from '@safe-link-checker/node-runtime';
+import { SafeLinkChecker, LRUCache, type VerificationResult } from '@safe-link-checker/node-runtime';
 
 describe('Batch Verification', () => {
   it('should verify multiple URLs concurrently and keep order', async () => {

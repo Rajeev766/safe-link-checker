@@ -8,7 +8,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "safe-link-checker": "workspace:*"
+    "safe-link-checker": "*"
   },
   "devDependencies": {
     "vite": "^5.0.0"

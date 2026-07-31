@@ -59,7 +59,7 @@ export class SafeLinkChecker extends EventEmitter {
   public analytics: AnalyticsTracker;
   public realtime: RealtimeSubscriptionEngine;
   public cloudGateway: CloudGateway | null = null;
-  public capabilities: Record<string, any> = {};
+  public capabilities: Record<string, unknown> = {};
 
   constructor(options: CheckerOptions = {}) {
     super();
@@ -72,7 +72,7 @@ export class SafeLinkChecker extends EventEmitter {
 
     if (options.cloud?.enabled && options.cloud.apiKey) {
       this.cloudGateway = new CloudGateway(options.cloud);
-      this.cloudGateway.connect((rules) => {
+      this.cloudGateway.connect(() => {
         // Handle incoming rules from cloud sync
       });
     }
@@ -121,7 +121,7 @@ export class SafeLinkChecker extends EventEmitter {
       } else if (mergedOptions.mode === 'cloud') { // Legacy support
         try {
           baseResult = await this.verifyCloudLegacy(url, mergedOptions);
-        } catch (e) {
+        } catch {
           baseResult = await this.verifyLocal(url, mergedOptions);
         }
       } else {
@@ -186,9 +186,8 @@ export class SafeLinkChecker extends EventEmitter {
     const plugins = this.pluginManager.getAll();
 
     // Declare runtime environment types locally to avoid global namespace pollution
-    interface DenoEnv { Deno?: unknown; }
-    interface BunEnv { Bun?: unknown; }
     
+
     const isDeno = typeof globalThis !== 'undefined' && 'Deno' in globalThis;
     const isBun = typeof globalThis !== 'undefined' && 'Bun' in globalThis;
     const isNode = typeof process !== 'undefined' && !!process.versions?.node;
@@ -288,7 +287,7 @@ export class SafeLinkChecker extends EventEmitter {
       trustScore: res.trustScore,
       riskScore: res.riskScore,
       classification: res.classification as Classification,
-      threatLevel: res.threat.level as any,
+      threatLevel: res.threat.level as import('@safe-link-checker/types').ThreatLevel,
       securityBadge: res.badge.label,
       riskColor: res.badge.color,
       summary: res.summary,
@@ -333,12 +332,15 @@ export class SafeLinkChecker extends EventEmitter {
         }
         
         const currentIndex = index++;
+        // eslint-disable-next-line security/detect-object-injection
         const url = urls[currentIndex] as string;
         try {
+          // eslint-disable-next-line security/detect-object-injection
           results[currentIndex] = await this.verify(url, runtimeOptions);
-        } catch (e: any) {
+        } catch (e: unknown) {
           // In bulk processing, individual failures should not crash the batch unless aborted
-          if (e.name === 'SafeLinkError' && e.message === 'Bulk verification aborted') throw e;
+          const isAbortError = e instanceof Error && e.name === 'SafeLinkError' && e.message === 'Bulk verification aborted';
+          if (isAbortError) throw e;
           
           const fallbackData: ReportData = {
             url,
@@ -350,7 +352,7 @@ export class SafeLinkChecker extends EventEmitter {
             riskScore: 100,
             confidence: 0,
             threatLevel: 'UNKNOWN',
-            summary: `Verification failed: ${e.message}`,
+            summary: `Verification failed: ${e instanceof Error ? e.message : String(e)}`,
             recommendation: 'Retry verification',
             runtime: 'unknown',
             checks: [],
@@ -365,6 +367,7 @@ export class SafeLinkChecker extends EventEmitter {
             skippedCapabilities: []
           };
           if (mergedOptions.debug) fallbackData.debug = mergedOptions.debug;
+          // eslint-disable-next-line security/detect-object-injection
           results[currentIndex] = createSecurityReport(fallbackData);
 
         }
@@ -388,7 +391,7 @@ export class SafeLinkChecker extends EventEmitter {
       trustScore: res.trustScore,
       riskScore: res.riskScore,
       classification: res.classification as Classification,
-      threatLevel: res.threat.level as any,
+      threatLevel: res.threat.level as import('@safe-link-checker/types').ThreatLevel,
       securityBadge: res.badge.label,
       riskColor: res.badge.color,
       summary: res.summary,

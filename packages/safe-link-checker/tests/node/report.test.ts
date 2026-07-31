@@ -1,5 +1,5 @@
 import { SafeLinkChecker } from '@safe-link-checker/node-runtime';
-import type { VerificationResult } from '@safe-link-checker/core';
+// import type { VerificationResult } from '@safe-link-checker/core';
 
 describe('Security Report API', () => {
   let checker: SafeLinkChecker;
@@ -37,7 +37,7 @@ describe('Security Report API', () => {
 
   it('should provide correct serialization with toJSON without functions', async () => {
     const result = await checker.verify('https://example.com');
-    const json = result.toJSON();
+    const json = result.toJSON!();
     
     expect(json.safe).toBe(result.safe);
     expect(json.isSafe).toBeUndefined();
@@ -52,19 +52,19 @@ describe('Security Report API', () => {
   it('should generate markdown and HTML exports', async () => {
     const result = await checker.verify('https://example.com');
     
-    const md = result.toMarkdown();
+    const md = result.toMarkdown!();
     expect(md).toContain('# Security Report: https://example.com');
     expect(md).toContain('**Decision:** ALLOW');
     
-    const html = result.toHTML();
+    const html = result.toHTML!();
     expect(html).toContain('<!DOCTYPE html>');
     expect(html).toContain('<title>Security Report: https://example.com</title>');
     expect(html).toContain('ALLOW');
     
     // Export helper
-    expect(result.export('json')).toBe(result.toString());
-    expect(result.export('markdown')).toBe(md);
-    expect(result.export('html')).toBe(html);
+    expect(result.export!('json')).toBe(result.toString!());
+    expect(result.export!('markdown')).toBe(md);
+    expect(result.export!('html')).toBe(html);
   });
   
   it('should map old backward compatible fields', async () => {

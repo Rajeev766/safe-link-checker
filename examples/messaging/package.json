@@ -1,8 +1,0 @@
-{
-  "name": "messaging-example",
-  "private": true,
-  "type": "module",
-  "dependencies": {
-    "safe-link-checker": "workspace:*"
-  }
-}

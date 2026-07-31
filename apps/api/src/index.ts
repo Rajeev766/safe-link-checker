@@ -20,7 +20,7 @@ app.register(compress);
 app.register(rateLimit, { max: 100, timeWindow: '1 minute' });
 
 // Setup hooks for realtime SSE clients
-const sseClients = new Map<string, any[]>();
+const sseClients = new Map<string, import('http').ServerResponse[]>();
 
 declare module 'fastify' {
   interface FastifyRequest {
@@ -68,18 +68,26 @@ app.post('/v1/verify', async (request: FastifyRequest, reply: FastifyReply) => {
   try {
     const result = await checker.verify(url);
     
+    interface ExtResult {
+      riskScore?: number;
+      threatLevel?: string;
+      providerResults?: { name: string }[];
+      checks?: { detector: string; name: string }[];
+    }
+    const extResult = result as unknown as ExtResult;
+
     await prisma.verificationEvent.create({
       data: {
         projectId: project.id,
         url,
         trustScore: result.trustScore ?? 0,
-        riskScore: (result as any).riskScore ?? 50,
-        threatLevel: (result as any).threatLevel ?? 'UNKNOWN',
+        riskScore: extResult.riskScore ?? 50,
+        threatLevel: extResult.threatLevel ?? 'UNKNOWN',
         decision: result.decision ?? 'ALLOW',
         cacheHit: result.fromCache ?? false,
         durationMs: 0,
-        providersUsed: (result as any).providerResults ? (result as any).providerResults.map((p: any) => p.name).join(',') : '',
-        rulesTriggered: (result as any).checks ? (result as any).checks.filter((e: any) => e.detector === 'rule-engine').map((e: any) => e.name).join(',') : ''
+        providersUsed: extResult.providerResults ? extResult.providerResults.map((p) => p.name).join(',') : '',
+        rulesTriggered: extResult.checks ? extResult.checks.filter((e) => e.detector === 'rule-engine').map((e) => e.name).join(',') : ''
       }
     });
 
@@ -97,9 +105,10 @@ app.post('/v1/verify/batch', async (request: FastifyRequest, reply: FastifyReply
   const project = request.project;
 
   try {
-    // Cast to any at the API gateway boundary — we receive the full enriched result
+    // Cast to unknown at the API gateway boundary — we receive the full enriched result
     // from the SDK but the compiled type definitions may differ from the runtime object.
-    const verifyResults = await checker.verifyLinks(urls) as any[];
+    type FullResult = PickledResult & { riskScore?: number; threatLevel?: string; classification?: string; summary?: string; recommendation?: string; recommendations?: string[]; };
+    const verifyResults = await checker.verifyLinks(urls) as unknown as FullResult[];
     const results: PickledResult[] = verifyResults.map(r => ({
       url: r.url,
       safe: r.safe,
@@ -162,7 +171,7 @@ app.get('/v1/sync', async (request: FastifyRequest, reply: FastifyReply) => {
   });
 });
 
-import { crawlUrl, correlateAI } from './crawler.js';
+// import { crawlUrl, correlateAI } from './crawler.js';
 
 const TelemetryEventSchema = z.object({
   url: z.string().url(),
@@ -183,7 +192,7 @@ app.post('/v1/telemetry/batch', async (request: FastifyRequest, reply: FastifyRe
   const project = request.project;
 
   try {
-    const logData = events.map(data => ({
+    const logData = events.map((data: z.infer<typeof TelemetryEventSchema>) => ({
       projectId: project.id,
       url: data.url,
       trustScore: data.trustScore,
@@ -218,9 +227,13 @@ app.post('/v1/telemetry/batch', async (request: FastifyRequest, reply: FastifyRe
             }
           });
 
-          const domainMatch = data.url.match(/^(?:https?:\/\/)?(?:[^@\n]+@)?(?:www\.)?([^:\/\n?]+)/im);
-          if (domainMatch && domainMatch[1]) {
-            const domain = domainMatch[1];
+          let domain: string | undefined;
+          try {
+            domain = new URL(data.url).hostname.replace(/^www\./, '');
+          } catch {
+            // ignore invalid urls
+          }
+          if (domain) {
             const domainNode = await prisma.threatNode.upsert({
               where: { value: domain },
               update: {},
@@ -269,7 +282,7 @@ app.post('/v1/community/report', async (request: FastifyRequest, reply: FastifyR
 });
 
 // Realtime Threat Feed SSE
-app.get('/v1/feeds/realtime', async (request, reply) => {
+app.get('/v1/feeds/realtime', async (request: FastifyRequest, reply: FastifyReply) => {
   reply.raw.setHeader('Content-Type', 'text/event-stream');
   reply.raw.setHeader('Cache-Control', 'no-cache');
   reply.raw.setHeader('Connection', 'keep-alive');

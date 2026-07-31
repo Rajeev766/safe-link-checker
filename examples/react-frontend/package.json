@@ -1,8 +1,0 @@
-{
-  "name": "react-example",
-  "private": true,
-  "dependencies": {
-    "safe-link-checker": "workspace:*",
-    "react": "^18.0.0"
-  }
-}

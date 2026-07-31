@@ -1,6 +1,4 @@
-import { SafeLinkChecker } from '@safe-link-checker/node-runtime';
-import { LRUCache } from '@safe-link-checker/node-runtime';
-import type { Provider, CheckResult, VerifyOptions, VerificationResult } from '@safe-link-checker/node-runtime';
+import { SafeLinkChecker, LRUCache, type Provider, type CheckResult, type VerifyOptions, type VerificationResult } from '@safe-link-checker/node-runtime';
 
 class MockProvider implements Provider {
   name = 'MockProvider';

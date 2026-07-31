@@ -71,7 +71,7 @@ export class SafeLinkChecker extends EventEmitter {
 
     if (options.cloud?.enabled && options.cloud.apiKey) {
       this.cloudGateway = new CloudGateway(options.cloud);
-      this.cloudGateway.connect((rules) => {
+      this.cloudGateway.connect(() => {
         // Handle incoming rules
       });
     }
@@ -178,8 +178,6 @@ export class SafeLinkChecker extends EventEmitter {
     const plugins = this.pluginManager.getAll();
 
     // Declare runtime environment types locally
-    interface DenoEnv { Deno?: unknown; }
-    interface BunEnv { Bun?: unknown; }
     
     const isDeno = typeof globalThis !== 'undefined' && 'Deno' in globalThis;
     const isBun = typeof globalThis !== 'undefined' && 'Bun' in globalThis;
@@ -295,7 +293,9 @@ export class SafeLinkChecker extends EventEmitter {
     const worker = async () => {
       while (index < urls.length) {
         const currentIndex = index++;
+        // eslint-disable-next-line security/detect-object-injection
         const url = urls[currentIndex] as string;
+        // eslint-disable-next-line security/detect-object-injection
         results[currentIndex] = await this.verify(url, runtimeOptions);
       }
     };
@@ -315,7 +315,7 @@ export class SafeLinkChecker extends EventEmitter {
       trustScore: res.trustScore,
       riskScore: res.riskScore,
       classification: res.classification as Classification,
-      threatLevel: res.threat.level as any,
+      threatLevel: res.threat.level as import('@safe-link-checker/types').ThreatLevel,
       securityBadge: res.badge.label,
       riskColor: res.badge.color,
       summary: res.summary,

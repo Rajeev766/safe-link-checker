@@ -1,8 +1,0 @@
-{
-  "name": "rn-example",
-  "private": true,
-  "dependencies": {
-    "safe-link-checker": "workspace:*",
-    "react-native": "*"
-  }
-}

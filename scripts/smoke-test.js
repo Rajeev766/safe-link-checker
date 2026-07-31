@@ -46,19 +46,23 @@ async function runSmokeTests() {
     // 1. Node ESM
     console.log('==> Testing Node ESM');
     const nodeEsmDir = path.join(tempDir, 'node-esm');
+    // eslint-disable-next-line security/detect-non-literal-fs-filename
     fs.mkdirSync(nodeEsmDir);
+    // eslint-disable-next-line security/detect-non-literal-fs-filename
     fs.writeFileSync(path.join(nodeEsmDir, 'package.json'), JSON.stringify({ type: 'module' }));
     execSync(`npm install ${tarballPath}`, { cwd: nodeEsmDir, stdio: 'inherit' });
+    // eslint-disable-next-line security/detect-non-literal-fs-filename
     fs.writeFileSync(path.join(nodeEsmDir, 'index.js'), VERIFY_SCRIPT);
     execSync('node index.js', { cwd: nodeEsmDir, stdio: 'inherit' });
     
     // 2. Node CJS
     console.log('==> Testing Node CJS');
     const nodeCjsDir = path.join(tempDir, 'node-cjs');
+    // eslint-disable-next-line security/detect-non-literal-fs-filename
     fs.mkdirSync(nodeCjsDir);
+    // eslint-disable-next-line security/detect-non-literal-fs-filename
     fs.writeFileSync(path.join(nodeCjsDir, 'package.json'), JSON.stringify({ type: 'commonjs' }));
     execSync(`npm install ${tarballPath}`, { cwd: nodeCjsDir, stdio: 'inherit' });
-    const cjsScript = VERIFY_SCRIPT.replace('import { SafeLinkChecker } from', 'const { SafeLinkChecker } = require(').replace(/;/g, ');').replace('require(\'safe-link-checker\');)', 'require(\'safe-link-checker\');'); // simple hack
     const correctCjsScript = `
 const { SafeLinkChecker } = require('safe-link-checker');
 
@@ -77,6 +81,7 @@ main().catch(e => {
   process.exit(1);
 });
 `;
+    // eslint-disable-next-line security/detect-non-literal-fs-filename
     fs.writeFileSync(path.join(nodeCjsDir, 'index.js'), correctCjsScript);
     execSync('node index.js', { cwd: nodeCjsDir, stdio: 'inherit' });
 
@@ -90,5 +95,6 @@ main().catch(e => {
 
 runSmokeTests().catch(e => {
   console.error('❌ Smoke tests failed:', e);
+  // eslint-disable-next-line no-undef
   process.exit(1);
 });
