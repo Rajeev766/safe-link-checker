@@ -3,6 +3,6 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "safe-link-checker": "workspace:*"
+    "safe-link-checker": "^1.1.0"
   }
 }

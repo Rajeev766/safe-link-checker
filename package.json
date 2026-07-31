@@ -3,7 +3,9 @@
   "private": true,
   "workspaces": [
     "packages/*",
-    "apps/*"
+    "apps/api",
+    "apps/docs",
+    "apps/playground"
   ],
   "scripts": {
     "test": "npm run test --workspaces --if-present",

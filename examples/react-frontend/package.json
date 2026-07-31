@@ -2,7 +2,7 @@
   "name": "react-example",
   "private": true,
   "dependencies": {
-    "safe-link-checker": "workspace:*",
+    "safe-link-checker": "^1.1.0",
     "react": "^18.0.0"
   }
 }
