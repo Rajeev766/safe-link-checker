@@ -3,7 +3,7 @@ import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import compress from '@fastify/compress';
 import rateLimit from '@fastify/rate-limit';
-import { PrismaClient, Project } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 import { SafeLinkChecker } from 'safe-link-checker';
 import { z } from 'zod';
 import type { PickledResult } from '@safe-link-checker/types';
@@ -24,11 +24,11 @@ const sseClients = new Map<string, any[]>();
 
 declare module 'fastify' {
   interface FastifyRequest {
-    project: Project;
+    project: { id: string };
   }
 }
 
-app.decorateRequest('project', null);
+app.decorateRequest('project', null as unknown as { id: string });
 
 app.addHook('preHandler', async (request: FastifyRequest, reply: FastifyReply) => {
   if (request.url === '/health') return;
