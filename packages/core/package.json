@@ -8,7 +8,7 @@
     "@safe-link-checker/shared": "*",
     "@safe-link-checker/types": "*",
     "ipaddr.js": "^2.2.0",
-    "normalize-url": "^8.0.0",
+    "normalize-url": "^9.0.1",
     "tldts": "^6.1.18",
     "validator": "^13.12.0"
   },
