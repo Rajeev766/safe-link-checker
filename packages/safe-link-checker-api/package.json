@@ -8,11 +8,11 @@
     "start": "node dist/server.js"
   },
   "dependencies": {
-    "express": "^4.19.2",
+    "express": "^5.2.1",
     "safe-link-checker": "*"
   },
   "devDependencies": {
-    "@types/express": "^4.17.21",
+    "@types/express": "^5.0.6",
     "@types/node": "^26.0.1",
     "tsup": "^8.5.1",
     "typescript": "^5.5.4"

@@ -28,7 +28,7 @@ declare module 'fastify' {
   }
 }
 
-app.decorateRequest('project', null);
+app.decorateRequest('project', null, []);
 
 app.addHook('preHandler', async (request: FastifyRequest, reply: FastifyReply) => {
   if (request.url === '/health') return;
