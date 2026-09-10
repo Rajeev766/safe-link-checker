@@ -7,7 +7,7 @@
  */
 
 import type { CheckResult } from '@safe-link-checker/types';
-import punycode from 'punycode';
+import punycode from 'punycode/';
 
 export function validatePunycode(urlStr: string): CheckResult {
   let hostname: string;

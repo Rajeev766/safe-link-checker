@@ -9,6 +9,7 @@
     "@safe-link-checker/types": "*",
     "ipaddr.js": "^2.2.0",
     "normalize-url": "^8.0.0",
+    "punycode": "^2.3.1",
     "tldts": "^6.1.18",
     "validator": "^13.12.0"
   },

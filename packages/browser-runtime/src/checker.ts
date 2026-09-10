@@ -60,6 +60,7 @@ export class SafeLinkChecker extends EventEmitter {
   public realtime: RealtimeSubscriptionEngine;
   public cloudGateway: CloudGateway | null = null;
   public capabilities: Record<string, unknown> = {};
+  private pluginsInitialized = false;
 
   constructor(options: CheckerOptions = {}) {
     super();
@@ -167,7 +168,13 @@ export class SafeLinkChecker extends EventEmitter {
 
   private async verifyLocal(url: string, mergedOptions: VerifyOptions & CheckerOptions): Promise<VerificationResult> {
     const startTime = Date.now();
-    await this.pluginManager.initializeAll();
+    // Initialize plugins lazily — only on the first verify() call.
+    // Plugin initialize() methods should be idempotent, but calling them
+    // once per checker instance is strictly correct and avoids repeat I/O.
+    if (!this.pluginsInitialized) {
+      await this.pluginManager.initializeAll();
+      this.pluginsInitialized = true;
+    }
 
     this.emit('onStart', url);
     if (this.options.onStart) this.options.onStart(url);
@@ -222,6 +229,11 @@ export class SafeLinkChecker extends EventEmitter {
     };
     const policyResult = this.policyEngine.evaluate(mergedOptions.policy, policyCtx);
 
+    const providerPlugins = plugins.filter(p => p.type === 'provider');
+    const expectedProviders = providerPlugins.length;
+    const successfulProviders = checks.filter(c => c.category === 'provider').length;
+    const failedProviders = expectedProviders - successfulProviders;
+
     const runtime = isDeno ? 'deno' :
                isBun ? 'bun' :
                typeof process !== 'undefined' && !!process.versions?.electron ? 'electron' :
@@ -242,6 +254,14 @@ export class SafeLinkChecker extends EventEmitter {
       threatLevel: engineResult.threatLevel,
       summary: engineResult.summary,
       recommendation: engineResult.recommendation,
+      ...(expectedProviders > 0 ? {
+        providerCoverage: {
+          expected: expectedProviders,
+          successful: successfulProviders,
+          failed: failedProviders,
+          isPartial: successfulProviders < expectedProviders
+        }
+      } : {}),
       runtime,
       checks,
       fromCache: false,

@@ -43,6 +43,13 @@ export interface ReportData {
   pluginsExecuted: number;
   pluginsSkipped: number;
   
+  providerCoverage?: {
+    expected: number;
+    successful: number;
+    failed: number;
+    isPartial: boolean;
+  };
+  
   performedCapabilities: string[];
   skippedCapabilities: string[];
   pluginResults?: PluginExecutionDetails[];
@@ -199,6 +206,7 @@ export function createSecurityReport(data: ReportData): VerificationResult {
     threat,
     url: urlDetails,
     performance,
+    ...(data.providerCoverage ? { providerCoverage: data.providerCoverage } : {}),
     
     // Legacy mapping
     riskLevel: data.threatLevel === 'CRITICAL' ? 'DANGEROUS' : data.threatLevel === 'HIGH' ? 'DANGEROUS' : data.threatLevel === 'MEDIUM' ? 'SUSPICIOUS' : 'SAFE',
@@ -224,7 +232,7 @@ export function createSecurityReport(data: ReportData): VerificationResult {
   return injectReportHelpers(report);
 }
 
-export function injectReportHelpers(report: any): VerificationResult {
+export function injectReportHelpers(report: Omit<VerificationResult, 'isSafe' | 'shouldWarn' | 'shouldBlock' | 'toJSON' | 'toString' | 'toMarkdown' | 'toHTML' | 'export'>): VerificationResult {
   // Attach non-enumerable helpers
   Object.defineProperties(report, {
     isSafe: { value: () => report.safe, enumerable: false, configurable: true },

@@ -121,7 +121,7 @@ Options:
     }
     
     if (values.debug && !values.silent) {
-      console.log(`[DEBUG] Verification completed in ${result.metrics?.durationMs ?? 0}ms`);
+      console.log(`[DEBUG] Verification completed in ${result.performance?.duration ?? 0}ms`);
     }
 
     if (values.silent) {
@@ -137,10 +137,10 @@ Options:
       console.log(`# Security Report for ${result.url.original}`);
       console.log(`\n**Status:** ${result.safe ? 'Safe' : 'Unsafe'} (${result.riskLevel})`);
       console.log(`**Score:** ${result.riskScore}/100\n`);
-      if (result.reasons.length > 0) {
+      if (result.reasons && result.reasons.length > 0) {
         console.log(`## Reasons\n${result.reasons.map((r: string) => `- ${r}`).join('\n')}\n`);
       }
-      if (result.recommendations.length > 0) {
+      if (result.recommendations && result.recommendations.length > 0) {
         console.log(`## Recommendations\n${result.recommendations.map((r: string) => `- ${r}`).join('\n')}\n`);
       }
       process.exit(result.safe ? 0 : 1);
@@ -155,8 +155,8 @@ Options:
   <h1>Security Report for ${result.url.original}</h1>
   <p><strong>Status:</strong> ${result.safe ? 'Safe' : 'Unsafe'} (${result.riskLevel})</p>
   <p><strong>Score:</strong> ${result.riskScore}/100</p>
-  ${result.reasons.length > 0 ? `<h2>Reasons</h2><ul>${result.reasons.map((r: string) => `<li>${r}</li>`).join('')}</ul>` : ''}
-  ${result.recommendations.length > 0 ? `<h2>Recommendations</h2><ul>${result.recommendations.map((r: string) => `<li>${r}</li>`).join('')}</ul>` : ''}
+  ${result.reasons && result.reasons.length > 0 ? `<h2>Reasons</h2><ul>${result.reasons.map((r: string) => `<li>${r}</li>`).join('')}</ul>` : ''}
+  ${result.recommendations && result.recommendations.length > 0 ? `<h2>Recommendations</h2><ul>${result.recommendations.map((r: string) => `<li>${r}</li>`).join('')}</ul>` : ''}
 </body>
 </html>`);
       process.exit(result.safe ? 0 : 1);

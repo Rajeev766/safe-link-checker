@@ -29,7 +29,7 @@ export interface PluginContext {
   normalizedUrl: string;
   options: VerifyOptions;
   state: PluginState; // Shared state across plugins during a single verification run
-  capabilities?: Record<string, any>;
+  capabilities?: Record<string, unknown>;
 }
 
 export interface VerificationPlugin {

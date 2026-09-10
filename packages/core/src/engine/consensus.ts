@@ -26,6 +26,9 @@ export interface ConsensusResult {
   summary: string;
 }
 
+/**
+ * @deprecated The ConsensusEngine is dead code and is no longer used by the primary scoring path (ReputationEngine). It will be removed in a future release.
+ */
 export class ConsensusEngine {
   private config: ConsensusConfig;
 

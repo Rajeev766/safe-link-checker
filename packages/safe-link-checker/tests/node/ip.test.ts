@@ -178,4 +178,112 @@ describe('validateIp', () => {
       expect(validateIp('https://1.1.1.1').scoreImpact).toBe(0);
     });
   });
+
+  // ─── SSRF bypass: non-canonical IPv4 encodings ───────────────────────────
+  // Node's WHATWG URL parser normalizes decimal-integer, hex-integer, and
+  // octal-dotted IPv4 forms to canonical dotted-decimal before validateIp() sees
+  // the hostname. This means non-canonical encodings are blocked by the existing
+  // ipaddr.js range checks. This test suite verifies the blocking behavior end-to-end
+  // and provides a regression guard. The tryNormalizeAlternativeIpv4() helper in
+  // ip.ts provides additional defense-in-depth for non-Node URL parsers.
+  describe('alternative IPv4 encodings (SSRF bypass prevention)', () => {
+    // ── Decimal integer encoding ────────────────────────────────────────────
+    // Node normalizes: http://2130706433 → hostname = "127.0.0.1"
+    describe('decimal integer (e.g. http://2130706433 = 127.0.0.1)', () => {
+      it('should block decimal encoding of 127.0.0.1 (loopback)', () => {
+        const res = validateIp('http://2130706433'); // 0x7f000001 = 127.0.0.1
+        expect(res.safe).toBe(false);
+        expect(res.scoreImpact).toBe(100);
+        expect(res.message).toContain('loopback');
+        expect(res.fatal).toBe(true);
+      });
+
+      it('should block decimal encoding of 192.168.0.1 (private)', () => {
+        const res = validateIp('http://3232235521'); // 0xC0A80001 = 192.168.0.1
+        expect(res.safe).toBe(false);
+        expect(res.scoreImpact).toBe(100);
+        expect(res.message).toContain('private');
+        expect(res.fatal).toBe(true);
+      });
+
+      it('should block decimal encoding of 10.0.0.1 (private)', () => {
+        const res = validateIp('http://167772161'); // 0x0A000001 = 10.0.0.1
+        expect(res.safe).toBe(false);
+        expect(res.scoreImpact).toBe(100);
+        expect(res.message).toContain('private');
+      });
+
+      it('should block decimal encoding of 169.254.169.254 (AWS metadata link-local)', () => {
+        const res = validateIp('http://2852039166'); // 0xA9FEA9FE = 169.254.169.254
+        expect(res.safe).toBe(false);
+        expect(res.scoreImpact).toBe(100);
+        expect(res.message).toContain('link-local');
+      });
+
+      it('should not false-positive on decimal numbers above 2^32 (not valid IPs)', () => {
+        // 4294967296 = 2^32 — Node's URL parser treats this as a domain component
+        const res = validateIp('http://4294967296.example.com');
+        expect(res.safe).toBe(true); // It's a domain, not an IP
+      });
+    });
+
+    // ── Hex integer encoding ────────────────────────────────────────────────
+    // Node normalizes: http://0x7f000001 → hostname = "127.0.0.1"
+    describe('hex integer (e.g. http://0x7f000001 = 127.0.0.1)', () => {
+      it('should block hex encoding of 127.0.0.1 (loopback)', () => {
+        const res = validateIp('http://0x7f000001');
+        expect(res.safe).toBe(false);
+        expect(res.scoreImpact).toBe(100);
+        expect(res.message).toContain('loopback');
+        expect(res.fatal).toBe(true);
+      });
+
+      it('should block hex encoding of 192.168.1.1 (private)', () => {
+        const res = validateIp('http://0xC0A80101');
+        expect(res.safe).toBe(false);
+        expect(res.scoreImpact).toBe(100);
+        expect(res.message).toContain('private');
+      });
+
+      it('should block hex encoding of 169.254.169.254 (link-local)', () => {
+        const res = validateIp('http://0xA9FEA9FE');
+        expect(res.safe).toBe(false);
+        expect(res.scoreImpact).toBe(100);
+        expect(res.message).toContain('link-local');
+      });
+    });
+
+    // ── Octal dotted encoding ───────────────────────────────────────────────
+    // Node normalizes: http://0177.0.0.1 → hostname = "127.0.0.1"
+    describe('octal dotted notation (e.g. http://0177.0.0.1 = 127.0.0.1)', () => {
+      it('should block octal encoding of 127.0.0.1 (loopback)', () => {
+        const res = validateIp('http://0177.0.0.1');
+        expect(res.safe).toBe(false);
+        expect(res.scoreImpact).toBe(100);
+        expect(res.message).toContain('loopback');
+        expect(res.fatal).toBe(true);
+      });
+
+      it('should block octal encoding of 10.0.0.1 (private)', () => {
+        const res = validateIp('http://012.0.0.1'); // 012 octal = 10 decimal
+        expect(res.safe).toBe(false);
+        expect(res.scoreImpact).toBe(100);
+        expect(res.message).toContain('private');
+      });
+    });
+
+    // ── No false positives on valid domain names ────────────────────────────
+    describe('no false positives on regular domains', () => {
+      it('should not block a domain that looks like a large number', () => {
+        const res = validateIp('http://1234567890.example.com');
+        expect(res.safe).toBe(true); // It's a domain, not a raw IP
+      });
+
+      it('should not change behavior for canonical IPs', () => {
+        expect(validateIp('http://127.0.0.1').safe).toBe(false);
+        expect(validateIp('https://8.8.8.8').safe).toBe(true);
+        expect(validateIp('https://example.com').safe).toBe(true);
+      });
+    });
+  });
 });

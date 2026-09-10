@@ -247,6 +247,12 @@ export interface VerificationResult {
   threat: ThreatDetails;
   url: UrlDetails;
   performance: PerformanceMetrics;
+  providerCoverage?: {
+    expected: number;
+    successful: number;
+    failed: number;
+    isPartial: boolean;
+  };
   
   // Debug
   pluginResults?: PluginExecutionDetails[];
@@ -271,7 +277,7 @@ export interface VerificationResult {
   isSafe?: () => boolean;
   shouldWarn?: () => boolean;
   shouldBlock?: () => boolean;
-  toJSON?: () => any;
+  toJSON?: () => Record<string, unknown>;
   toString?: () => string;
   toMarkdown?: () => string;
   toHTML?: () => string;

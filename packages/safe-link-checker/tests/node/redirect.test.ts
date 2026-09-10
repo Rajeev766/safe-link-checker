@@ -1,6 +1,8 @@
 import { traceRedirects } from '@safe-link-checker/node-runtime';
 import http from 'http';
+import https from 'https';
 import type { AddressInfo } from 'net';
+import { jest } from '@jest/globals';
 
 describe('Redirect Validator', () => {
   let server: http.Server;
@@ -77,12 +79,36 @@ describe('Redirect Validator', () => {
   });
 
   it('should detect protocol downgrade', async () => {
-    // Start with https url, redirect to http url
-    // To mock this without setting up an actual https server, we could potentially just mock the traceRedirects behavior, or use a mocked function.
-    // However, the https->http logic is string based in redirect.ts
-    // Let's test it by pointing to a mock URL and intercepting or assuming it'll time out but catch the header?
-    // Actually, `traceRedirects` makes real network requests. If we want to test protocol downgrade, we'd need an https server.
-    // For now, let's mock the `headRequest` or just accept it's tested via logic.
-    // I will skip the downgrade test in this integration test unless I set up an https server.
+    // Mock https.request to avoid needing a real TLS server
+    const mockRequest = jest.spyOn(https, 'request').mockImplementation((url, options, cb) => {
+      let callback = cb;
+      if (typeof options === 'function') callback = options;
+      
+      const res = {
+        statusCode: 302,
+        headers: { location: 'http://example.com/downgraded' },
+        on: jest.fn(),
+        destroy: jest.fn(),
+        resume: jest.fn()
+      };
+      
+      if (callback) {
+        callback(res);
+      }
+      
+      return {
+        on: jest.fn(),
+        end: jest.fn(),
+        destroy: jest.fn()
+      } as any;
+    });
+
+    try {
+      const trace = await traceRedirects(`https://secure.example.com/start`);
+      expect(trace.anomalies).toContain('PROTOCOL_DOWNGRADE');
+      expect(trace.redirectCount).toBe(0); // It stops tracing immediately on downgrade
+    } finally {
+      mockRequest.mockRestore();
+    }
   });
 });

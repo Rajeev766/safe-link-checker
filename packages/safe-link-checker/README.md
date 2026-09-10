@@ -73,6 +73,13 @@ if (blockedUrls.length > 0) {
 }
 ```
 
+## Security & Privacy Model 🛡️
+
+Safe Link Checker is designed with strict data boundaries:
+- **Local Heuristics (Zero Data Leakage)**: By default, checks (including Punycode, homograph, pattern matching, and URL syntax) run entirely in-memory. Your URLs never leave the process.
+- **Threat Intelligence Providers**: If you explicitly configure external providers (e.g., URLHaus), the SDK sends the target URL as a POST body string (not as the fetch target) to a hardcoded, trusted API endpoint.
+- **SSRF & Rebinding Protection**: The Node.js network path (`checkHttps` and `redirectTrace`) protects against SSRF and DNS rebinding by resolving hostnames upfront (`safeLookup`), blocking private IP ranges, and guarding against decimal/octal/hex IP obfuscation.
+
 ## Result Model
 
 Both runtimes return the exact same structured result format:

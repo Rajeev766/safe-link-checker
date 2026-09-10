@@ -60,6 +60,12 @@ export function validateHeuristics(url: string): CheckResult {
   const flags: string[] = [];
   let penalty = 0;
 
+  // URL length check
+  if (url.length > 2000) {
+    flags.push('excessive_length');
+    penalty += 20;
+  }
+
   if (parsed.isIp) {
     // IPs are handled by IP validator, but raw IPs are inherently suspicious for standard phishing
     flags.push('raw_ip');
@@ -99,6 +105,11 @@ export function validateHeuristics(url: string): CheckResult {
   if (encodedCount > 10) {
     flags.push('excessive_encoding');
     penalty += 15;
+  }
+  
+  if (url.match(/%25[0-9A-Fa-f]{2}/gi)) {
+    flags.push('double_encoding');
+    penalty += 20;
   }
 
   // Lookalike check

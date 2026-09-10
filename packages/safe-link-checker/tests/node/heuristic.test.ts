@@ -32,6 +32,25 @@ describe('Heuristics Validator', () => {
     expect(res2.metadata?.flags).toContain('lookalike_domain:google');
   });
 
+  it('should detect excessive and double encoding', () => {
+    // Excessive encoding
+    const res1 = validateHeuristics('http://example.com/path?q=%20%20%20%20%20%20%20%20%20%20%20');
+    expect(res1.safe).toBe(false);
+    expect(res1.metadata?.flags).toContain('excessive_encoding');
+
+    // Double encoding
+    const res2 = validateHeuristics('http://example.com/path?q=%2520');
+    expect(res2.safe).toBe(false);
+    expect(res2.metadata?.flags).toContain('double_encoding');
+  });
+
+  it('should detect excessive URL length', () => {
+    const longUrl = 'http://example.com/' + 'a'.repeat(2000);
+    const res = validateHeuristics(longUrl);
+    expect(res.safe).toBe(false);
+    expect(res.metadata?.flags).toContain('excessive_length');
+  });
+
   it('should pass benign domains', () => {
     const res = validateHeuristics('https://google.com');
     expect(res.safe).toBe(true);
