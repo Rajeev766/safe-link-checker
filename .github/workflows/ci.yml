@@ -41,7 +41,7 @@ jobs:
       if: matrix.os == 'ubuntu-latest'
 
     - name: Bundle Size Limit
-      run: npm run size
+      run: npm run size -w safe-link-checker
       if: matrix.os == 'ubuntu-latest'
 
   codeql:
